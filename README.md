@@ -13,6 +13,11 @@ This repository is the start of a practical knowledge base for AI agents, harnes
    Each entry has a compact label and a plain-language explanation.  
    *First post in the knowledge base.*
 
+2. **[Motion Engineering with Opus 5.5](./motion-engineering-opus55-paper.pdf)**  
+   Production protocol for building launch videos with Opus 5.5 and Remotion.  
+   Covers reference analysis, five-part brief, frame-driven animation, staged review, synchronized audio, export verification, and a bounded commercial offer.  
+   *Second post in the knowledge base.*
+
 ---
 
 More entries coming.
