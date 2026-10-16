@@ -18,6 +18,11 @@ This repository is the start of a practical knowledge base for AI agents, harnes
    Covers reference analysis, five-part brief, frame-driven animation, staged review, synchronized audio, export verification, and a bounded commercial offer.  
    *Second post in the knowledge base.*
 
+3. **[Motion Design Studio: 600 Ideas](./beamnxw-motion-design-studio-600.pdf)**  
+   A practical collection of motion briefs — from magnetic cursors and kinetic type to bento reveals, AI interfaces and cinematic product loops.  
+   30 categories, 600 ideas, with technique references and resource links.  
+   *Third post in the knowledge base.*
+
 ---
 
 More entries coming.
