@@ -23,6 +23,10 @@ This repository is the start of a practical knowledge base for AI agents, harnes
    30 categories, 600 ideas, with technique references and resource links.  
    *Third post in the knowledge base.*
 
+4. **[Opus 5.5 Motion Studio Harness](./opus55-motion-studio-harness.zip)**  
+   Ready-to-use harness / project package for the Motion Engineering workflow with Opus 5.5.  
+   *Fourth entry in the knowledge base.*
+
 ---
 
 More entries coming.
