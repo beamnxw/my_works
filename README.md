@@ -27,6 +27,10 @@ This repository is the start of a practical knowledge base for AI agents, harnes
    Ready-to-use harness / project package for the Motion Engineering workflow with Opus 5.5.  
    *Fourth entry in the knowledge base.*
 
+5. **[Product Harness Starter](./product-harness-starter.zip)**  
+   Starter package for product harness workflows.  
+   *Fifth entry in the knowledge base.*
+
 ---
 
 More entries coming.
