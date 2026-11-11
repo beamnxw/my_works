@@ -35,6 +35,10 @@ This repository is the start of a practical knowledge base for AI agents, harnes
    Official prompting patterns for Claude Fable 5.2: effort calibration, persistence, code ownership, subagents, progress updates, and clear communication.  
    *Sixth entry in the knowledge base.*
 
+7. **[Fable 5.2 Product Harness](./fable52-product-harness.zip)**  
+   Product harness package aligned with Claude Fable 5.2 prompting patterns.  
+   *Seventh entry in the knowledge base.*
+
 ---
 
 More entries coming.
