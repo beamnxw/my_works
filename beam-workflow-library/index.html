@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Beam Workflow Library</title>
+<style>
+:root {
+  --cream: #FAF9F5;
+  --ink: #141413;
+  --coral: #D97757;
+  --violet: #6748FD;
+  --lilac: #947FFF;
+  --peach: #FFBD9E;
+  --navy: #150079;
+  --paper: #FFFFFF;
+  --ink-soft: rgba(20, 20, 19, 0.72);
+  --line: rgba(20, 20, 19, 0.16);
+  --line-strong: rgba(20, 20, 19, 0.55);
+  --coral-wash: rgba(217, 119, 87, 0.16);
+  --lilac-wash: rgba(148, 127, 255, 0.18);
+  --peach-wash: rgba(255, 189, 158, 0.45);
+  --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --radius: 14px;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+}
+h1, h2, h3 { font-family: var(--serif); font-weight: 500; line-height: 1.15; margin: 0; letter-spacing: -0.01em; }
+p { margin: 0; }
+ul, ol { margin: 0; padding-left: 1.3em; }
+li { margin: 0.35em 0; }
+a { color: var(--navy); text-underline-offset: 3px; }
+a:hover { color: var(--violet); }
+:focus { outline: none; }
+:focus-visible { outline: 3px solid var(--violet); outline-offset: 2px; border-radius: 6px; }
+.skip { position: absolute; left: 16px; top: -60px; background: var(--ink); color: var(--cream); padding: 10px 16px; border-radius: 8px; z-index: 10; }
+.skip:focus { top: 12px; color: var(--cream); }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+
+/* Masthead */
+.masthead { padding: 56px 0 40px; display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: center; }
+.eyebrow { font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 14px; }
+h1 { font-size: 48px; }
+.lede { font-size: 18px; max-width: 46em; margin-top: 18px; color: var(--ink); }
+.own { font-size: 14px; color: var(--ink-soft); margin-top: 14px; max-width: 54em; }
+.mascot { width: 132px; height: auto; display: block; }
+
+/* Controls */
+.controls { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 28px 0; display: grid; gap: 20px; }
+.searchrow { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; }
+label.field, .grouplabel { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.hint { font-weight: 400; color: var(--ink-soft); }
+input[type="search"] {
+  width: 100%; min-height: 48px; padding: 10px 14px; font: inherit; color: var(--ink);
+  background: var(--paper); border: 1.5px solid var(--line-strong); border-radius: 10px;
+}
+input[type="search"]:focus-visible { outline: 3px solid var(--violet); outline-offset: 1px; border-radius: 10px; }
+.filters { display: grid; grid-template-columns: repeat(3, auto); justify-content: start; gap: 20px 40px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+button { font: inherit; color: var(--ink); cursor: pointer; }
+.chip {
+  min-height: 44px; padding: 8px 14px; background: transparent; border: 1.5px solid var(--line-strong);
+  border-radius: 999px; font-size: 14px; line-height: 1.2;
+}
+.chip:hover { background: var(--lilac-wash); }
+.chip[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: var(--cream); }
+.btn {
+  min-height: 44px; padding: 9px 18px; border-radius: 10px; border: 1.5px solid var(--ink);
+  background: transparent; font-size: 16px; font-weight: 600; line-height: 1.2;
+}
+.btn:hover { background: var(--peach-wash); }
+.btn.primary { background: var(--coral); border-color: var(--coral); }
+.btn.primary:hover { background: var(--peach); border-color: var(--peach); }
+.btn.quiet { border-color: var(--line-strong); font-weight: 500; }
+.btn[disabled] { opacity: 0.45; cursor: default; background: transparent; }
+.notice { background: var(--peach-wash); border-left: 4px solid var(--coral); padding: 12px 16px; border-radius: 8px; font-size: 14px; }
+
+/* Layout */
+.main { display: grid; grid-template-columns: minmax(320px, 400px) minmax(0, 1fr); gap: 48px; padding: 32px 0 72px; align-items: start; }
+.status { font-size: 14px; color: var(--ink-soft); margin-bottom: 16px; min-height: 1.6em; }
+.list { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+.card {
+  position: relative; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 20px 20px 16px; margin: 0;
+}
+.card.is-open { border-color: var(--coral); box-shadow: inset 4px 0 0 var(--coral); }
+.card:hover { border-color: var(--line-strong); }
+.card.is-open:hover { border-color: var(--coral); }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; font-size: 14px; color: var(--ink-soft); }
+.tag { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 14px; color: var(--ink); background: var(--lilac-wash); }
+.tag.c1 { background: var(--coral-wash); }
+.tag.c2 { background: var(--peach-wash); }
+.cid { font-family: var(--mono); font-size: 14px; }
+.card h3 { font-size: 22px; margin: 10px 0 8px; }
+.card h3 a { color: var(--ink); text-decoration: none; }
+.card h3 a::after { content: ""; position: absolute; inset: 0; border-radius: var(--radius); }
+.card h3 a:hover { color: var(--navy); text-decoration: underline; }
+.card p.task { font-size: 16px; color: var(--ink-soft); }
+.card .seq { font-size: 14px; margin-top: 12px; color: var(--ink); }
+.card .foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 12px; }
+.card .found { font-size: 14px; color: var(--navy); }
+.fav {
+  position: relative; z-index: 1; min-height: 44px; min-width: 44px; padding: 6px 12px; background: transparent;
+  border: 1.5px solid var(--line-strong); border-radius: 999px; font-size: 14px; line-height: 1.2;
+}
+.fav:hover { background: var(--peach-wash); }
+.fav[aria-pressed="true"] { background: var(--peach); border-color: var(--coral); }
+.empty { text-align: center; padding: 40px 20px; border: 1.5px dashed var(--line-strong); border-radius: var(--radius); }
+.empty img { width: 84px; height: auto; margin: 0 auto 16px; display: block; }
+.empty h3 { font-size: 22px; margin-bottom: 8px; }
+.empty p { color: var(--ink-soft); margin-bottom: 18px; }
+
+/* Detail */
+.detail { min-width: 0; }
+.placeholder { padding: 56px 32px; text-align: center; border: 1.5px dashed var(--line-strong); border-radius: var(--radius); color: var(--ink-soft); }
+.placeholder img { width: 96px; height: auto; margin: 0 auto 18px; display: block; }
+.placeholder h2 { font-size: 30px; color: var(--ink); margin-bottom: 10px; }
+.back { display: none; margin-bottom: 20px; }
+.detail h2 { font-size: 30px; margin: 12px 0 14px; }
+.detail .task { font-size: 18px; max-width: 44em; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 6px; }
+.livemsg { font-size: 14px; color: var(--navy); min-height: 1.6em; margin-top: 6px; }
+.sec { border-top: 1px solid var(--line); margin-top: 28px; padding-top: 24px; }
+.sec h3 { font-size: 22px; margin-bottom: 12px; }
+.sec .note { font-size: 14px; color: var(--ink-soft); margin-bottom: 12px; max-width: 48em; }
+.rolehead { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.rolehead img { width: 44px; height: auto; flex: none; }
+.rolehead h3 { margin: 0; }
+ol.roles { list-style: none; padding: 0; counter-reset: r; display: grid; gap: 10px; }
+ol.roles li { counter-increment: r; margin: 0; padding: 14px 16px 14px 56px; position: relative; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; }
+ol.roles li::before { content: counter(r); position: absolute; left: 16px; top: 14px; width: 28px; height: 28px; border-radius: 50%; background: var(--navy); color: var(--cream); font-size: 14px; font-weight: 600; display: grid; place-items: center; }
+ol.roles strong { font-size: 16px; display: block; }
+ol.roles .hand { display: block; font-size: 14px; color: var(--ink-soft); margin-top: 4px; }
+textarea.prompt, textarea.md {
+  width: 100%; display: block; resize: vertical; font-family: var(--mono); font-size: 14px; line-height: 1.55;
+  color: var(--ink); background: var(--paper); border: 1.5px solid var(--line-strong); border-radius: 12px; padding: 16px;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+textarea.prompt { min-height: 320px; }
+textarea.md { min-height: 260px; margin-top: 12px; }
+textarea:focus-visible { outline: 3px solid var(--violet); outline-offset: 1px; border-radius: 12px; }
+.promptbar { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 12px; align-items: center; }
+ul.checks { list-style: none; padding: 0; }
+ul.checks li { padding-left: 30px; position: relative; }
+ul.checks li::before { content: ""; position: absolute; left: 2px; top: 0.3em; width: 16px; height: 16px; border: 1.5px solid var(--line-strong); border-radius: 4px; background: var(--paper); }
+ul.sources { list-style: none; padding: 0; display: grid; gap: 14px; }
+ul.sources li { margin: 0; padding: 14px 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; }
+ul.sources a { font-weight: 600; overflow-wrap: anywhere; }
+ul.sources .smeta { display: block; font-size: 14px; color: var(--ink-soft); margin: 2px 0 6px; overflow-wrap: anywhere; }
+details.mdbox summary { cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+details.mdbox summary::before { content: "+"; display: inline-block; width: 1.2em; font-family: var(--mono); }
+details.mdbox[open] summary::before { content: "\2212"; }
+details.mdbox summary::-webkit-details-marker { display: none; }
+
+/* Footer */
+footer { border-top: 1px solid var(--line); padding: 40px 0 64px; font-size: 14px; color: var(--ink-soft); }
+footer h2 { font-size: 22px; color: var(--ink); margin-bottom: 12px; }
+footer p { max-width: 62em; margin-bottom: 12px; }
+footer .assets { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 8px; }
+footer .assets li { margin: 0; overflow-wrap: anywhere; }
+footer code { font-family: var(--mono); font-size: 14px; color: var(--ink); }
+.credit { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 24px; color: var(--ink); }
+.credit img { height: 22px; width: auto; display: block; }
+
+[hidden] { display: none !important; }
+
+@media (max-width: 959px) {
+  .wrap { padding: 0 20px; }
+  .masthead { padding: 36px 0 28px; gap: 16px; }
+  h1 { font-size: 30px; }
+  .mascot { width: 84px; }
+  .filters { grid-template-columns: 1fr; gap: 18px; }
+  .main { grid-template-columns: minmax(0, 1fr); gap: 0; padding-top: 24px; }
+  body[data-view="list"] .detail { display: none; }
+  body[data-view="detail"] .listcol, body[data-view="detail"] .controls, body[data-view="detail"] .masthead { display: none; }
+  body[data-view="detail"] .main { padding-top: 20px; }
+  .back { display: inline-flex; align-items: center; }
+  .detail h2 { font-size: 30px; }
+}
+@media (max-width: 480px) {
+  .searchrow { grid-template-columns: 1fr; }
+  .searchrow .btn { width: 100%; }
+  .actions .btn, .promptbar .btn { flex: 1 1 auto; }
+  .lede { font-size: 16px; }
+  .detail .task { font-size: 16px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .chip, .btn, .fav, .card { transition: background-color 120ms ease, border-color 120ms ease; }
+}
+</style>
+</head>
+<body data-view="list">
+<a class="skip" href="#results">Skip to workflows</a>
+
+<div class="wrap">
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">beamnxw &middot; local library &middot; <span id="lib-version"></span></p>
+      <h1>Beam Workflow Library</h1>
+      <p class="lede">Six workflows for real work with an AI session. Find one, read what it needs, copy the full prompt, and export it as Markdown.</p>
+      <p class="own">Original beamnxw material, adapted from public guidance. Not official Anthropic presets, and not a tool that runs a model. Everything stays in this file and in this browser.</p>
+    </div>
+    <img class="mascot" id="clawd-src" alt="Clawd, a coral pixel mascot, shown as an illustration" width="693" height="527" src="data:image/png;base64,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">
+  </header>
+
+  <noscript><p class="notice">This library needs JavaScript to show, search and export the cards. The card text is also in the file workflows.json next to this page.</p></noscript>
+
+  <section class="controls" aria-label="Find a workflow">
+    <div class="searchrow">
+      <div>
+        <label class="field" for="q">Search <span class="hint">in title, task and prompt text. Press / to jump here.</span></label>
+        <input type="search" id="q" autocomplete="off" spellcheck="false" placeholder="For example: citation, contract, snapshot">
+      </div>
+      <button type="button" class="btn quiet" id="reset" disabled>Reset all</button>
+    </div>
+    <div class="filters">
+      <div role="group" aria-labelledby="lab-cat">
+        <span class="grouplabel" id="lab-cat">Category</span>
+        <div class="chips" id="chips-cat"></div>
+      </div>
+      <div role="group" aria-labelledby="lab-role">
+        <span class="grouplabel" id="lab-role">Role in the sequence</span>
+        <div class="chips" id="chips-role"></div>
+      </div>
+      <div role="group" aria-labelledby="lab-fav">
+        <span class="grouplabel" id="lab-fav">Favourites</span>
+        <div class="chips"><button type="button" class="chip" id="favonly" aria-pressed="false">Favourites only (0)</button></div>
+      </div>
+    </div>
+    <p class="notice" id="storage-notice" hidden>This browser is not letting the page keep data here, so favourites will be forgotten when the page is reloaded or closed. Opening the library through localhost usually fixes this.</p>
+  </section>
+
+  <main class="main">
+    <section class="listcol" aria-label="Workflows">
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+      <ul class="list" id="results" tabindex="-1"></ul>
+      <div class="empty" id="empty" hidden>
+        <img alt="" id="empty-img" width="693" height="527">
+        <h3>No workflow matches</h3>
+        <p id="empty-why"></p>
+        <button type="button" class="btn primary" id="empty-reset">Reset all</button>
+      </div>
+    </section>
+    <section class="detail" id="detail" aria-label="Workflow detail"></section>
+  </main>
+</div>
+
+<footer>
+  <div class="wrap">
+    <h2>About this library</h2>
+    <p id="about-note"></p>
+    <p id="about-sources"></p>
+    <p><strong>Supplied images.</strong> Both images are embedded as unchanged copies of the files the owner supplied, shown for illustration at the owner's request. No licence, ownership of these marks, or partnership with Anthropic or Viktor is claimed. The mascot illustrates roles; it is not a sign that a separate Claude session exists.</p>
+    <ul class="assets" id="about-assets"></ul>
+    <p class="credit"><img id="wordmark" alt="Viktor wordmark" width="338" height="100" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iVmlrdG9yX3g1Rl9Mb2dvX3g1Rl9TQl94NUZfUkdCIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgdmlld0JveD0iMCAwIDMzOCAxMDAiPgogIDwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAzMC40LjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiAyLjEuNCBCdWlsZCAyMjYpICAtLT4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLnN0MCB7CiAgICAgICAgZmlsbDogIzFiMTgyYTsKICAgICAgfQogICAgPC9zdHlsZT4KICA8L2RlZnM+CiAgPHBhdGggY2xhc3M9InN0MCIgZD0iTTgxLjEsMGgxLjVjNi45LDAsMTIuNyw1LjYsMTIuNywxMi40cy01LjgsMTIuNy0xMi43LDEyLjdoLTEuNWMtNi45LDAtMTIuNC01LjYtMTIuNC0xMi43Uzc0LjIsMCw4MS4xLDBaTTI1Miw1MS45Yy02LjIsMC0xMS40LDQuMy0xMS40LDExLjh2MS4zYzAsNy41LDUuMiwxMS44LDExLjQsMTEuOHMxMC45LTQuMywxMC45LTExLjh2LTEuM2MwLTcuNS00LjktMTEuOC0xMC45LTExLjhaTTI5NC45LDI5LjZoNDEuMmMuNiwwLDEuMy40LDEuMywxLjF2MjEuMmMwLC42LS42LDEuMS0xLjMsMS4xaC05LjdjLTQuNywwLTguNiwzLjktOC42LDguOHYzNi41YzAsLjYtLjYsMS4xLTEuMywxLjFoLTIxLjdjLS42LDAtMS4xLS40LTEuMS0xLjFWMzAuN2MwLS42LjQtMS4xLDEuMS0xLjFaTTE3My43LDYuNGgyMS43Yy42LDAsMS4zLjQsMS4zLDEuMXYyMi4xaDEzLjljLjYsMCwxLjMuNiwxLjMsMS4zdjIxLjJjMCwuNi0uNiwxLjMtMS4zLDEuM2gtMTMuOXYyMi41aDEzLjljLjYsMCwxLjMuNCwxLjMsMS4xdjIxYzAsLjYtLjYsMS4xLTEuMywxLjFoLTEyLjljLTE2LjMsMC0yNS4xLTcuNy0yNS4xLTI0VjcuNWMwLS42LjQtMS4xLDEuMS0xLjFaTTEuMSwyOS42aDIxLjljLjYsMCwxLjEuNCwxLjEsMS4xdjQ1LjdoMy43YzYuNCwwLDkuNi0zLjQsOS42LTEwLjNWMzAuN2MwLS42LjQtMS4xLDEuMS0xLjFoMjEuOWMuNiwwLDEuMS40LDEuMSwxLjF2NDEuNmMwLDE1LjItMTUuMiwyNy0zNS40LDI3SDEuMWMtLjYsMC0xLjEtLjQtMS4xLTEuMVYzMC43YzAtLjYuNC0xLjEsMS4xLTEuMVpNMTAzLjksNi40aDIxLjdjLjYsMCwxLjEuNiwxLjEsMS4zdjQzLjdsMTMuNC0yMS4yYy4yLS4yLjYtLjQsMS4xLS40aDI0LjVjLjksMCwxLjUsMS4xLjksMS43bC0xNywyMy42YzEyLjgsMCwxNS4yLDkuMiwxNS4yLDE3LjRsLjIsMjUuNWMwLC42LS42LDEuMS0xLjMsMS4xaC0yMS4yYy0uNiwwLTEuMS0uNC0xLjEtMS4xdi0xNy40YzAtNC41LTMtNy4xLTcuMy03LjFzLTcuMywyLjYtNy4zLDcuMXYxNy40YzAsLjYtLjQsMS4zLTEuMSwxLjNoLTIxLjdjLS42LDAtMS4zLS42LTEuMy0xLjNWNy43YzAtLjYuNi0xLjMsMS4zLTEuM1pNNzEsMjkuNmgyMS43Yy42LDAsMS4zLjQsMS4zLDEuMXY2Ny40YzAsLjYtLjYsMS4zLTEuMywxLjNoLTIxLjdjLS42LDAtMS4xLS42LTEuMS0xLjNWMzAuN2MwLS42LjQtMS4xLDEuMS0xLjFaTTI1Mi4yLDI4LjhjMjAuNCwwLDM1LjQsMTUuOSwzNS40LDM1LjRzLTE1LDM1LjgtMzUuNCwzNS44LTM1LjgtMTYuMy0zNS44LTM1LjgsMTUuNS0zNS40LDM1LjgtMzUuNFoiLz4KPC9zdmc+"><span>App code written by Viktor, an AI employee, for beamnxw's own local use.</span></p>
+  </div>
+</footer>
+
+<script type="application/json" id="workflow-data">
+{
+  "library": {
+    "name": "Beam Workflow Library",
+    "version": "v1",
+    "owner": "beamnxw",
+    "language": "en",
+    "card_count": 6,
+    "adaptation_note": "Original beamnxw material. These six cards are our own adaptations of public guidance, not official Anthropic presets. The library prepares instructions for a person to paste into a session; it does not run a model or orchestrate agents. Roles are responsibilities and handoffs carried out in sequence, not separate workers and not evidence of parallel execution. No prompt in this library has been tested in a separate Claude session.",
+    "sources_note": "The three source pages were read by plain HTTP request on 2026-11-10 and are used as methodological grounding only. Each source line says what the card takes from the page.",
+    "assets": [
+      {
+        "file": "assets/clawd.png",
+        "source": "https://claude.dev/shared/img/clawd-mark.png",
+        "sha256": "874eeac471afa1d5675b0ccf872d9396f279f3d064bf2a5d5efe5c90f560b9f4",
+        "processing": "unmodified copy"
+      },
+      {
+        "file": "assets/viktor-wordmark.svg",
+        "source": "https://viktor.com/brand",
+        "sha256": "ff64f87a6c3da30ae9f091466b4e42d4a384c372f4fb8b9b0460a3d3c9364836",
+        "processing": "unmodified copy"
+      }
+    ]
+  },
+  "categories": [
+    "Research & writing",
+    "Product build",
+    "Quality & handoff"
+  ],
+  "roles": [
+    {
+      "name": "Researcher",
+      "responsibility": "Finds out what is actually there: opens sources or reads the existing snapshot, and records what was seen."
+    },
+    {
+      "name": "Writer",
+      "responsibility": "Turns accepted material into a readable draft without adding facts of its own."
+    },
+    {
+      "name": "Planner",
+      "responsibility": "Fixes scope and says what done looks like before work starts."
+    },
+    {
+      "name": "Builder",
+      "responsibility": "Implements exactly what was agreed and keeps the work runnable."
+    },
+    {
+      "name": "Evaluator",
+      "responsibility": "Checks a result against its contract or sources and reports what passed, failed or could not be checked."
+    },
+    {
+      "name": "Recorder",
+      "responsibility": "Writes down what was really done, run and left open, so the next reader does not have to guess."
+    },
+    {
+      "name": "Owner",
+      "responsibility": "The human. Supplies inputs, hands work between roles, and makes every decision and approval."
+    }
+  ],
+  "workflows": [
+    {
+      "id": "BWL-001",
+      "seed_id": "research-brief",
+      "title": "Research a technical topic",
+      "category": "Research & writing",
+      "task": "Answer one scoped technical question from primary sources with a citation for every claim, keeping evidence, vendor claims and inference apart, and saying plainly what could not be established.",
+      "inputs": [
+        "The question, and the reader it is for",
+        "Scope: what is in, what is out, and how date-sensitive the answer is",
+        "Permitted sources, and any that must not be used",
+        "Required output format and length",
+        "Tools the session really has (web access, file reading, or none), plus any pasted material"
+      ],
+      "roles": [
+        {
+          "role": "Planner",
+          "does": "Restates the question, fixes the scope and says what a complete answer must contain.",
+          "hands_on": "A one-paragraph research plan, or a clarifying question for the owner."
+        },
+        {
+          "role": "Researcher",
+          "does": "Opens the permitted sources and logs what each one actually says.",
+          "hands_on": "A source log and a draft report."
+        },
+        {
+          "role": "Evaluator",
+          "does": "Checks every consequential claim against its cited source and moves unsupported claims out.",
+          "hands_on": "The checked report with labelled claims and a \"Not established\" section."
+        },
+        {
+          "role": "Owner",
+          "does": "Decides whether the report answers the question and what it may be used for.",
+          "hands_on": "A decision: accept, ask for more, or stop."
+        }
+      ],
+      "steps": [
+        "Fill in the placeholders and list the tools the session really has.",
+        "Planner pass: restate the question and scope. Answer any clarifying question before research starts.",
+        "Researcher pass: read the permitted sources and log title, publisher, date, URL and use for each.",
+        "Draft the report with the answer first and every claim labelled Evidence, Vendor claim or Inference.",
+        "Evaluator pass: trace each claim to its source and move anything unsupported to \"Not established\".",
+        "Read the report, the source log and the open questions, then decide what happens next."
+      ],
+      "prompt": "You are helping me research one technical question. Work through the three passes below in order. Each pass is a responsibility, not a separate worker. I am the operator: I supply the inputs, hand work from one pass to the next, and make every decision about the result.\n\n<inputs>\nQuestion: {{QUESTION}}\nReader: {{TARGET_READER}}\nIn scope: {{IN_SCOPE}}\nOut of scope: {{OUT_OF_SCOPE}}\nDate sensitivity: {{DATE_SENSITIVITY}}\nPermitted sources: {{PERMITTED_SOURCES}}\nSources not to use: {{EXCLUDED_SOURCES}}\nOutput format and length: {{OUTPUT_FORMAT}}\n<\/inputs>\n\n<tools>\nTools available in this session: {{TOOLS_AVAILABLE}}\nIf a tool is not listed above, you do not have it. Say what you could not do instead of describing a result you did not observe.\n<\/tools>\n\n<material>\n{{PASTED_MATERIAL_OR_NONE}}\n<\/material>\n\nIf you have no tool that can open a source, work only from the text under <material> and say so at the top of the report.\n\nPass 1 - Planner\nRestate the question in one sentence. List what is in scope, what is out, and what a complete answer must contain. If the question can be read in two materially different ways, stop and ask me which one I mean before going on.\n\nPass 2 - Researcher\nOpen each permitted source you can reach. Prefer primary sources: the original documentation, paper, specification, changelog or statement from the party responsible. For every source you actually opened, log its title, publisher, date, URL and what you used it for. Then draft the report.\n\nPass 3 - Evaluator\nRe-read the draft as someone who did not write it. For each consequential factual claim, find the passage in the cited source that supports it. If you cannot find one, move the claim to \"Not established\" or delete it. Do not soften the wording to keep an unsupported claim in.\n\nOutput format\n1. Answer: the direct answer to the question in a short paragraph.\n2. Evidence: numbered claims. Label each one [Evidence] (a primary source states it), [Vendor claim] (a company says it about its own product) or [Inference] (your reasoning from the evidence). End each claim with its citation: the number of the source in the list below.\n3. Not established: what you looked for and could not confirm, and why.\n4. Sources: the log from Pass 2, with secondary sources marked as secondary.\n5. Open questions for the owner.\n\nRules\n- Cite only sources you opened in this session or that I pasted. Never cite from memory.\n- Give the date of every source and say where the answer may have changed since.\n- Keep quotations short and exact. Paraphrase the rest.\n- State uncertainty plainly. Do not turn \"probably\" into \"is\".\n- Stay inside the question. Do not recommend a decision unless I asked for one.\n\nBefore you finish, answer each line with yes, no or not checked:\n- Every consequential claim has a source that directly supports it.\n- Evidence, vendor claims and inference are labelled separately.\n- Everything that could not be confirmed is listed under \"Not established\".\n- The report answers the question as restated in Pass 1.",
+      "checks": [
+        "Every consequential factual claim has a directly supporting source.",
+        "Evidence that could not be found is stated, not papered over.",
+        "The report answers the question that was supplied.",
+        "Evidence, vendor claims and inference are labelled separately.",
+        "Every cited source was opened in the session or pasted by the operator."
+      ],
+      "boundaries": [
+        "No conclusions or recommendations beyond what the sources support.",
+        "No browsing or file access unless the operator listed that tool.",
+        "An Evaluator pass in the same session is a self-check, not an independent review. For independence, paste the draft and Pass 3 into a fresh session.",
+        "The owner decides whether the report is good enough to rely on or publish."
+      ],
+      "sources": [
+        {
+          "label": "Claude Code Docs: Best practices for Claude Code",
+          "publisher": "Anthropic (Claude Code documentation)",
+          "published": "Living page, no fixed date",
+          "read": "2026-11-10",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "grounds": "Loose support only. We take the general shape: give the session the context it cannot see, be specific about what done looks like, and give it something to check its work against. The page is about coding sessions; the citation and labelling rules are our own adaptation."
+        }
+      ]
+    },
+    {
+      "id": "BWL-002",
+      "seed_id": "technical-guide",
+      "title": "Turn research into a technical guide",
+      "category": "Research & writing",
+      "task": "Turn a research report the owner has accepted into an original guide with a stated audience, prerequisites, concrete steps and limits, without inventing firsthand use.",
+      "inputs": [
+        "The accepted research report with its source list (for example the output of BWL-001)",
+        "Audience, and what they should be able to do afterwards",
+        "Prerequisites the reader is assumed to have",
+        "Examples that were really run or verified, and by whom (or none)",
+        "Format, length and tone",
+        "Tools the session really has"
+      ],
+      "roles": [
+        {
+          "role": "Planner",
+          "does": "Fixes audience and purpose and outlines the guide, mapping each section to claims in the report.",
+          "hands_on": "An outline and a list of gaps in the report."
+        },
+        {
+          "role": "Writer",
+          "does": "Drafts the guide from the report only, keeping each claim attached to its source.",
+          "hands_on": "A draft with every step marked as verified example or not run here."
+        },
+        {
+          "role": "Evaluator",
+          "does": "Traces each step and claim back to the report and removes implied firsthand experience.",
+          "hands_on": "The checked draft and a list of changes."
+        },
+        {
+          "role": "Owner",
+          "does": "Edits, accepts or returns the guide and decides whether it is published.",
+          "hands_on": "A decision on the draft."
+        }
+      ],
+      "steps": [
+        "Paste the research report and fill in audience, purpose and prerequisites.",
+        "Planner pass: review the outline and settle any gap that would make a step misleading.",
+        "Writer pass: draft audience, prerequisites, numbered steps with expected results, limits and sources.",
+        "Mark each step \"Verified example supplied\" or \"From sources, not run here\".",
+        "Evaluator pass: trace every step and claim to the report and remove firsthand wording that was not supplied.",
+        "Read the guide and the gap list, then decide what happens next."
+      ],
+      "prompt": "You are helping me turn a research report into a technical guide. Work through the three passes below in order. Each pass is a responsibility, not a separate worker. I am the operator: I supply the inputs, hand work from one pass to the next, and make every decision about the result.\n\n<inputs>\nAudience: {{AUDIENCE}}\nWhat the reader should be able to do afterwards: {{PURPOSE}}\nPrerequisites the reader already has: {{PREREQUISITES}}\nFormat, length and tone: {{FORMAT_LENGTH_TONE}}\n<\/inputs>\n\n<research_report>\n{{RESEARCH_REPORT_WITH_SOURCES}}\n<\/research_report>\n\n<verified_examples>\n{{EXAMPLES_ACTUALLY_RUN_AND_BY_WHOM_OR_NONE}}\n<\/verified_examples>\n\n<tools>\nTools available in this session: {{TOOLS_AVAILABLE}}\nIf a tool is not listed above, you do not have it. Say what you could not do instead of describing a result you did not observe.\n<\/tools>\n\nThe research report is the only source of facts for this guide. Do not add facts from memory or from tools, even where the report looks incomplete.\n\nPass 1 - Planner\nWrite a short outline. Next to each section, note which claims in the report it rests on. List anything the guide needs that the report does not cover. If a gap would make a step unsafe or misleading, stop and ask me before drafting.\n\nPass 2 - Writer\nDraft the guide in this order:\n1. Who this is for, and what they will be able to do.\n2. Prerequisites.\n3. Steps, numbered. Each step says what to do and what the reader should see when it worked.\n4. Limits: what the guide does not cover, known failure cases, and anything date-sensitive.\n5. Sources, carried over from the report with their links.\nMark every step either \"Verified example supplied\" (it appears under <verified_examples>) or \"From sources, not run here\".\n\nPass 3 - Evaluator\nRe-read the draft as someone who did not write it. Trace every step and every factual claim back to the report. Remove or flag anything you cannot trace. Remove any sentence that implies firsthand use, such as \"I ran\", \"we tested\" or \"in our experience\", unless it quotes a supplied verified example and names who ran it.\n\nOutput format\n- The guide.\n- Gaps: what the report did not cover.\n- Changes made in Pass 3, one line each.\n\nRules\n- No invented firsthand experience, results, timings or savings.\n- Keep each claim attached to its source link from the report.\n- Write for the stated audience. Explain a term the first time it appears if the prerequisites do not cover it.\n- Do not describe the guide as reviewed, approved or tested. That is my decision.\n\nBefore you finish, answer each line with yes, no or not checked:\n- Every step and claim traces to the research report.\n- Every step states its expected result.\n- No sentence claims firsthand use that was not supplied.\n- The limits section is present and specific.\n- Source links are retained.",
+      "checks": [
+        "No invented firsthand experience.",
+        "Every step identifies its expected result.",
+        "Claims retain their source links.",
+        "Every step and claim traces to the research report.",
+        "A specific limits section is present."
+      ],
+      "boundaries": [
+        "No new facts beyond the research report, even where it looks incomplete.",
+        "No statement that the guide was tested, reviewed or approved.",
+        "No results, timings or savings that the report does not contain.",
+        "Publication is the owner's decision."
+      ],
+      "sources": [
+        {
+          "label": "Claude Code Docs: Best practices for Claude Code",
+          "publisher": "Anthropic (Claude Code documentation)",
+          "published": "Living page, no fixed date",
+          "read": "2026-11-10",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "grounds": "Loose support only. We take two ideas: supply the context the session cannot find for itself (here, audience and prerequisites), and have the work re-read by a reviewer that did not write it. The page is about coding sessions; the guide structure and the firsthand-use rule are our own adaptation."
+        }
+      ]
+    },
+    {
+      "id": "BWL-003",
+      "seed_id": "feature-contract",
+      "title": "Plan one product feature",
+      "category": "Product build",
+      "task": "Turn one product need into a bounded feature contract: what is in, what is out, what will be delivered, and checks an observer can mark pass or fail.",
+      "inputs": [
+        "The real product goal, in the owner's words",
+        "The existing app or repository and its environment (or a description, if the session cannot read it)",
+        "Owner constraints: stack, limits, things that must not change",
+        "Work already known to be out of scope",
+        "Tools the session really has"
+      ],
+      "roles": [
+        {
+          "role": "Researcher",
+          "does": "Reads the parts of the existing app the feature touches and separates what was observed from what was told.",
+          "hands_on": "A short current-state note."
+        },
+        {
+          "role": "Planner",
+          "does": "Writes a contract for exactly one feature: scope, deliverables and checks.",
+          "hands_on": "A proposed feature contract."
+        },
+        {
+          "role": "Evaluator",
+          "does": "Tests each check: could a stranger carry it out and mark it pass or fail?",
+          "hands_on": "The contract with weak checks rewritten or listed as decisions."
+        },
+        {
+          "role": "Owner",
+          "does": "Answers the listed decisions and agrees, changes or rejects the contract.",
+          "hands_on": "An agreed contract. Only the owner can make it agreed."
+        }
+      ],
+      "steps": [
+        "Fill in the goal, environment and constraints, and list the tools the session really has.",
+        "Researcher pass: note the current state as Observed and Told.",
+        "Planner pass: write the contract for one feature and name anything left out.",
+        "Evaluator pass: rewrite every check into an action with an expected observable result.",
+        "Answer the \"Decisions needed\" list.",
+        "Agree the contract explicitly, or send it back. Building starts only after that."
+      ],
+      "prompt": "You are helping me plan one product feature. The result is a feature contract, not code. Work through the three passes below in order. Each pass is a responsibility, not a separate worker. I am the operator: I supply the inputs, hand work from one pass to the next, and make every decision about the result.\n\n<inputs>\nProduct goal, in my words: {{PRODUCT_GOAL}}\nExisting app or repository: {{APP_OR_REPO_LOCATION_OR_DESCRIPTION}}\nEnvironment: {{ENVIRONMENT}}\nConstraints: {{OWNER_CONSTRAINTS}}\nAlready out of scope: {{KNOWN_OUT_OF_SCOPE}}\n<\/inputs>\n\n<tools>\nTools available in this session: {{TOOLS_AVAILABLE}}\nIf a tool is not listed above, you do not have it. Say what you could not do instead of describing a result you did not observe.\n<\/tools>\n\nPass 1 - Researcher\nIf you can read the existing app or repository, read the parts this feature touches and note what is there. If you cannot, work from my description. Keep two short lists: \"Observed\" (you read it yourself) and \"Told\" (from my description, not checked).\n\nPass 2 - Planner\nWrite a contract for exactly one feature. If the goal needs more than one, name the others and ask me which to plan first. Describe what must be delivered and how it will be checked. Leave implementation detail to the builder unless one of my constraints requires it.\n\nPass 3 - Evaluator\nTest every check in the contract with one question: could someone who has never seen this conversation carry it out and mark it pass or fail? Rewrite any check that depends on judgement, such as \"works well\" or \"looks clean\", into an action and an expected result. If you cannot, list it under \"Decisions needed\".\n\nOutput format\nFeature contract: <name>\nStatus: Proposed - not agreed\n1. Goal: one or two sentences.\n2. Current state: Observed and Told.\n3. In scope.\n4. Out of scope.\n5. Deliverables: files, screens or behaviours that will exist afterwards.\n6. Checks: a numbered list. Each check has an action, the expected observable result, and how to run it (command, URL or manual steps).\n7. Assumptions.\n8. Decisions needed from the owner.\n\nRules\n- Planning only. Do not write, edit or run application code.\n- One feature. Anything else goes under \"Out of scope\".\n- Do not choose between materially different options for me. Put the choice under \"Decisions needed\" with a one-line trade-off.\n- The contract stays \"Proposed - not agreed\" until I say otherwise. Never mark it agreed or approved yourself.\n\nBefore you finish, answer each line with yes, no or not checked:\n- In-scope and out-of-scope work are both explicit.\n- Every deliverable has at least one check.\n- Every check can be marked pass or fail by an observer.\n- Material decisions are listed for the owner and not settled silently.\n- The status line reads \"Proposed - not agreed\".",
+      "checks": [
+        "In-scope and excluded work are both explicit.",
+        "Each requirement has an observable check.",
+        "Material decisions are escalated to the owner before building.",
+        "The contract covers one feature only.",
+        "The status reads \"Proposed - not agreed\" until the owner says otherwise."
+      ],
+      "boundaries": [
+        "Planning only: no application code is written, edited or run.",
+        "The session never marks the contract agreed or approved.",
+        "No choice between materially different options is made on the owner's behalf.",
+        "Current-state statements that were not read directly stay labelled \"Told\"."
+      ],
+      "sources": [
+        {
+          "label": "Anthropic: Harness design for long-running apps",
+          "publisher": "Anthropic",
+          "published": "2026-03-24",
+          "read": "2026-11-10",
+          "url": "https://www.anthropic.com/research/harness-design-long-running-apps",
+          "grounds": "The article describes a planner that stays on product context and deliverables and avoids granular implementation detail, and a contract agreed before any code is written that says what done looks like and how it will be verified. We adapt that to a contract a human owner agrees."
+        },
+        {
+          "label": "Claude Code Docs: Best practices for Claude Code",
+          "publisher": "Anthropic (Claude Code documentation)",
+          "published": "Living page, no fixed date",
+          "read": "2026-11-10",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "grounds": "Supports saying up front what done looks like and supplying decisions and constraints the session cannot read from the code."
+        }
+      ]
+    },
+    {
+      "id": "BWL-004",
+      "seed_id": "implement-feature",
+      "title": "Build an agreed feature",
+      "category": "Product build",
+      "task": "Implement one agreed feature contract, run the checks that are actually available, and leave startup instructions and a record another session can follow.",
+      "inputs": [
+        "The agreed feature contract with its checks (for example from BWL-003)",
+        "The repository or snapshot, and its identifier (commit, tag or archive name)",
+        "How to start the app, and the check commands that exist",
+        "Commands the session may run, and what it must not touch",
+        "Tools the session really has"
+      ],
+      "roles": [
+        {
+          "role": "Builder",
+          "does": "Implements only what the contract lists, in small steps, keeping the app runnable.",
+          "hands_on": "The change and a list of files touched."
+        },
+        {
+          "role": "Evaluator",
+          "does": "Runs the contract checks the tools allow and records each as Passed, Failed or Not run.",
+          "hands_on": "Check results with evidence, tied to the snapshot."
+        },
+        {
+          "role": "Recorder",
+          "does": "Writes the build record and startup instructions from what actually ran.",
+          "hands_on": "Summary, results, startup steps and gaps."
+        },
+        {
+          "role": "Owner",
+          "does": "Reviews the record and decides whether to accept, request changes or ask for a separate evaluation (BWL-005).",
+          "hands_on": "A decision on the build."
+        }
+      ],
+      "steps": [
+        "Paste the agreed contract and fill in snapshot, commands and boundaries.",
+        "Before any change: confirm the starting snapshot and run one existing check or start the app.",
+        "Builder pass: implement the in-scope work only. Stop and ask if the contract is unclear.",
+        "Evaluator pass: run each available check and record Passed, Failed or Not run with evidence.",
+        "Recorder pass: write the summary, startup instructions from commands actually run, and the gaps.",
+        "Review the record. For an independent check, hand the snapshot to BWL-005 in a fresh session."
+      ],
+      "prompt": "You are helping me build one agreed feature. Work through the three passes below in order. Each pass is a responsibility, not a separate worker. I am the operator: I supply the inputs, hand work from one pass to the next, and make every decision about the result.\n\n<contract>\n{{AGREED_FEATURE_CONTRACT_WITH_CHECKS}}\n<\/contract>\n\n<inputs>\nRepository or snapshot: {{REPO_OR_SNAPSHOT_LOCATION}}\nStarting snapshot identifier (commit, tag or archive name): {{STARTING_SNAPSHOT_ID}}\nHow to start the app: {{STARTUP_COMMAND_OR_UNKNOWN}}\nCheck commands that exist (tests, build, lint): {{CHECK_COMMANDS_OR_NONE}}\nCommands you may run: {{ALLOWED_COMMANDS}}\nFiles, services and actions you must not touch: {{BOUNDARIES}}\n<\/inputs>\n\n<tools>\nTools available in this session: {{TOOLS_AVAILABLE}}\nIf a tool is not listed above, you do not have it. Say what you could not do instead of describing a result you did not observe.\n<\/tools>\n\nBefore changing anything\nRead the contract. Confirm which snapshot you are starting from. If you can run commands, start the app or run one existing check and record whether it works before your change. If it is already broken, stop and tell me.\n\nPass 1 - Builder\nImplement only what the contract lists as in scope. Work in small steps and keep the app in a state that starts and runs. If the contract is unclear, or the work would need something outside it, stop and ask me. Do not widen the scope yourself.\n\nPass 2 - Evaluator\nRun every check from the contract that your tools allow, against the snapshot as it now stands. Record each check as Passed (you ran it and saw the expected result), Failed (you ran it and saw something else) or Not run (with the reason and the exact steps I can use to run it). Reading the code is not running the check: label that \"Inspected, not run\". If a check fails, fix the implementation, not the check.\n\nPass 3 - Recorder\nWrite the build record from what actually happened in this session, not from what was planned.\n\nOutput format\n1. Summary: what was built, in two or three sentences.\n2. Snapshot: the starting identifier, and the resulting identifier or changed-file list.\n3. Files changed: path and one line each.\n4. Check results: a table with check number, status, and evidence (command and the relevant output).\n5. Startup instructions: the exact commands you ran to start the app, in order. If you could not start it, say so and give the commands you expect to work, labelled as not run.\n6. Gaps and known problems.\n7. Suggested next action for the owner.\n\nRules\n- Build only the agreed work. List anything else you noticed under \"Gaps\".\n- Never remove, weaken or rewrite a check so that it passes.\n- Never report a check as passed unless you ran it in this session.\n- No deploying, publishing, pushing or installing anything unless it is listed under \"Commands you may run\".\n- Do not describe the feature as accepted or approved. I decide that after review.\n\nBefore you finish, answer each line with yes, no or not checked:\n- Only in-scope work was done.\n- Every contract check has a status of Passed, Failed or Not run.\n- Each result names the snapshot it was run against.\n- Startup instructions come from commands actually run, or are labelled as not run.\n- Remaining gaps are recorded.",
+      "checks": [
+        "Only agreed work is performed.",
+        "Check results name the snapshot they were run against.",
+        "Startup instructions and remaining gaps are recorded.",
+        "Every contract check has a status of Passed, Failed or Not run.",
+        "No check was removed or weakened to make it pass."
+      ],
+      "boundaries": [
+        "Nothing outside the agreed contract is built.",
+        "No deploy, publish, push or install unless the operator listed the command as allowed.",
+        "A check that was only read, not run, is never reported as passed.",
+        "The session does not describe the feature as accepted. The owner decides after review."
+      ],
+      "sources": [
+        {
+          "label": "Anthropic: Effective harnesses for long-running agents",
+          "publisher": "Anthropic",
+          "published": "2025-11-26",
+          "read": "2026-11-10",
+          "url": "https://www.anthropic.com/research/effective-harnesses-for-long-running-agents",
+          "grounds": "The article describes working on one feature at a time, getting bearings and running a basic check before new work, testing end to end before marking anything as passing, never editing tests to make them pass, and leaving a start script and progress notes. We adapt those habits to a single prompt."
+        },
+        {
+          "label": "Anthropic: Harness design for long-running apps",
+          "publisher": "Anthropic",
+          "published": "2026-03-24",
+          "read": "2026-11-10",
+          "url": "https://www.anthropic.com/research/harness-design-long-running-apps",
+          "grounds": "Supports building against a contract agreed beforehand and handing the result to a separate evaluation step."
+        },
+        {
+          "label": "Claude Code Docs: Best practices for Claude Code",
+          "publisher": "Anthropic (Claude Code documentation)",
+          "published": "Living page, no fixed date",
+          "read": "2026-11-10",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "grounds": "Supports giving the session a check it can run that comes back pass or fail, and stating what it is allowed to touch."
+        }
+      ]
+    },
+    {
+      "id": "BWL-005",
+      "seed_id": "evaluate-result",
+      "title": "Evaluate and report an issue",
+      "category": "Quality & handoff",
+      "task": "Check a supplied result against its contract without editing it, and report passed, failed and untested checks separately, with reproduction steps for every failure.",
+      "inputs": [
+        "The feature contract or expected behaviour",
+        "The specific result snapshot (commit, build, archive or local URL) and how to start it",
+        "Environment details: OS, browser, runtime versions",
+        "Verification tools the session really has (browser automation, test runner, or none)"
+      ],
+      "roles": [
+        {
+          "role": "Evaluator",
+          "does": "Confirms the snapshot, exercises each contract check and sorts it into Passed, Failed or Untested.",
+          "hands_on": "Findings with evidence for each check."
+        },
+        {
+          "role": "Recorder",
+          "does": "Writes the report and one reproducible issue for every failed check.",
+          "hands_on": "The issue report."
+        },
+        {
+          "role": "Owner",
+          "does": "Decides what the findings mean: accept, send back for repair, or re-test.",
+          "hands_on": "A decision. The report itself gives no verdict."
+        }
+      ],
+      "steps": [
+        "Paste the contract, name the exact snapshot and list the verification tools available.",
+        "Evaluator pass: confirm the snapshot identity before testing anything.",
+        "Exercise each check as a user would where tools allow. Otherwise inspect and label it \"Inspected, not run\".",
+        "Sort every check into Passed, Failed or Untested.",
+        "Recorder pass: write an issue with steps, expected and actual result, and evidence for each failure.",
+        "Read the report and decide what happens next. Run the untested checks yourself if they matter."
+      ],
+      "prompt": "You are helping me evaluate a result against its contract and report what you find. You report; you do not fix. Work through the two passes below in order. Each pass is a responsibility, not a separate worker. I am the operator: I supply the inputs, hand work from one pass to the next, and make every decision about the result.\n\n<contract>\n{{FEATURE_CONTRACT_OR_EXPECTED_BEHAVIOUR}}\n<\/contract>\n\n<inputs>\nResult snapshot (commit, build, archive or local URL): {{RESULT_SNAPSHOT_ID_AND_LOCATION}}\nHow to start it: {{STARTUP_INSTRUCTIONS}}\nEnvironment (OS, browser, runtime versions): {{ENVIRONMENT}}\n<\/inputs>\n\n<tools>\nTools available in this session: {{TOOLS_AVAILABLE}}\nIf a tool is not listed above, you do not have it. Say what you could not do instead of describing a result you did not observe.\n<\/tools>\n\nPass 1 - Evaluator\nFirst confirm you are looking at the snapshot named above, and say how you confirmed it. Then take the contract checks one at a time. Where your tools allow, exercise the result the way a user would and compare what you see with the expected result. Where they do not, you may read the code, but record that as \"Inspected, not run\". Judge the snapshot itself, not anyone's description of it.\n\nPut every check in exactly one group:\n- Passed: you ran it and observed the expected result.\n- Failed: you ran it and observed something different.\n- Untested: you could not run it. Give the reason and the steps I can use to run it.\n\nPass 2 - Recorder\nWrite the report in the format below. For every failed check, write an issue someone else can reproduce without asking you anything.\n\nOutput format\n1. Snapshot evaluated, and how it was confirmed.\n2. Environment and tools actually used.\n3. Counts: passed, failed, untested.\n4. Passed: check number and the evidence you saw.\n5. Failed: one issue per check, with\n   - Title\n   - Steps to reproduce, numbered, starting from a fresh start of the app\n   - Expected result, quoted from the contract\n   - Actual result\n   - Evidence: command output, log line or screenshot path\n   - Location in the code, only if you found it\n6. Untested: check number, reason, and how to run it.\n7. Outside the contract: other problems you noticed, clearly separated.\n\nRules\n- Do not edit, repair or re-run the build with changes. If you changed anything in order to test, say exactly what.\n- Do not move a failure to \"passed\" because the rest looks good, and do not call a problem minor unless the contract does.\n- Report gaps against the contract. Leave out style preferences the contract does not mention.\n- State any tool you did not have. A check you could not run is untested, never passed.\n- Give no overall approval or rejection. I decide what happens next.\n\nBefore you finish, answer each line with yes, no or not checked:\n- Passed, failed and untested checks are in separate lists.\n- Every failure has reproduction steps, expected result and actual result.\n- The snapshot identifier appears in the report.\n- Missing tool access is disclosed.\n- Nothing in the result was edited.",
+      "checks": [
+        "Passed, failed and untested checks are distinct.",
+        "Every failure includes reproduction steps and the expected behaviour.",
+        "Missing tool access is disclosed.",
+        "The report names the snapshot that was evaluated.",
+        "Nothing in the result was edited during evaluation."
+      ],
+      "boundaries": [
+        "Report only: no fixes, no silent edits to the result.",
+        "Findings come from the snapshot itself, not from a description of the work.",
+        "A check that could not be run is untested, never passed.",
+        "No overall approval or rejection. That decision belongs to the owner."
+      ],
+      "sources": [
+        {
+          "label": "Anthropic: Harness design for long-running apps",
+          "publisher": "Anthropic",
+          "published": "2026-03-24",
+          "read": "2026-11-10",
+          "url": "https://www.anthropic.com/research/harness-design-long-running-apps",
+          "grounds": "The article reports that separating the party judging the work from the party doing it is a strong lever, that an evaluator should exercise the running result as a user would against agreed criteria, and that evaluators tend to talk themselves out of real issues. We adapt this to a report-only prompt with three result groups."
+        },
+        {
+          "label": "Claude Code Docs: Best practices for Claude Code",
+          "publisher": "Anthropic (Claude Code documentation)",
+          "published": "Living page, no fixed date",
+          "read": "2026-11-10",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "grounds": "Supports review by someone who did not write the code, reviewing against the spec, and reporting gaps that affect correctness while leaving style aside."
+        }
+      ]
+    },
+    {
+      "id": "BWL-006",
+      "seed_id": "session-handoff",
+      "title": "Hand work to the next session",
+      "category": "Quality & handoff",
+      "task": "Record the minimum context another session needs to continue without guessing: goal, exact snapshot, work done, checks, gaps and one next action.",
+      "inputs": [
+        "The current goal and who owns it",
+        "The exact snapshot: commit, file list, artifact locations, how to start it",
+        "Work performed in this session",
+        "Checks actually run, with results",
+        "Decisions the owner actually made, with their scope",
+        "Known gaps, open questions and the intended next action",
+        "Tools the session really has (can it read the repository or notes, or only what is pasted?)"
+      ],
+      "roles": [
+        {
+          "role": "Recorder",
+          "does": "Writes the handoff note from the supplied facts, checks identifiers where it can, and marks missing items \"Not recorded\".",
+          "hands_on": "The handoff note."
+        },
+        {
+          "role": "Owner",
+          "does": "Corrects the note, confirms the next action and gives it to the next session.",
+          "hands_on": "The note, pasted at the start of the next session."
+        }
+      ],
+      "steps": [
+        "Fill in goal, snapshot, work done, checks, decisions, gaps and next action.",
+        "List the tools the session has, so it knows whether it can verify paths and identifiers.",
+        "Recorder pass: write the ten-section note. Missing facts become \"Not recorded\".",
+        "Check that owner decisions carry their scope and that open questions are separate.",
+        "Check that there is exactly one next action with a first command or file.",
+        "Correct the note, then paste it at the start of the next session."
+      ],
+      "prompt": "You are helping me write a handoff note so that another session, or another person, can continue this work without guessing. The reader will not have this conversation. Each pass is a responsibility, not a separate worker. I am the operator: I supply the inputs, hand work from one pass to the next, and make every decision about the result.\n\n<inputs>\nGoal and owner: {{CURRENT_GOAL_AND_OWNER}}\nExact snapshot (commit, file list, artifact locations): {{SNAPSHOT_ID_AND_LOCATIONS}}\nHow to start or open the work: {{STARTUP_COMMANDS_OR_UNKNOWN}}\nWork performed this session: {{WORK_PERFORMED}}\nChecks actually run, with results: {{CHECKS_RUN_AND_RESULTS}}\nDecisions the owner actually made: {{OWNER_DECISIONS_WITH_SCOPE}}\nKnown gaps and open questions: {{KNOWN_GAPS}}\nIntended next action: {{NEXT_ACTION}}\n<\/inputs>\n\n<tools>\nTools available in this session: {{TOOLS_AVAILABLE}}\nIf a tool is not listed above, you do not have it. Say what you could not do instead of describing a result you did not observe.\n<\/tools>\n\nPass 1 - Recorder\nWrite the note from the inputs above and from anything you can read with the listed tools. If you can read the repository or progress notes, check the snapshot identifier and file locations against them and correct the note where they differ, saying that you did. Where something is missing, write \"Not recorded\". Do not fill a gap with a guess.\n\nOutput format\nHandoff: <goal in a few words>\nWritten: <date>, by <who>\n1. Goal: what the work is for and what done means.\n2. Snapshot: identifiers, where the artifacts are, and the exact commands to start or open them.\n3. Done this session: short factual lines.\n4. Checks: Passed, Failed and Not run, each with the command or steps used.\n5. Owner decisions: each one with its scope, for example \"approved the wording of section 2\" and not \"approved\".\n6. Open questions: who needs to answer each one.\n7. Gaps and known problems.\n8. Next action: one concrete action, with the first command or file to open.\n9. Do not: boundaries the next session must keep.\n10. Read first: the two or three files or messages that matter most.\n\nRules\n- Record only what the inputs or your own reading support. Unfinished work stays described as unfinished.\n- Keep approvals at the scope they were given. Never widen or infer one.\n- Use concrete commands, paths and identifiers in place of descriptions.\n- One next action. If there are several candidates, list the others under \"Open questions\".\n- Keep it short enough to read in two minutes.\n\nBefore you finish, answer each line with yes, no or not checked:\n- A reader with no access to this conversation could start the next action from this note alone.\n- Commands and artifact locations are concrete.\n- Decisions are separated from open questions, and each approval keeps its scope.\n- Nothing unfinished is described as finished.\n- Every missing item is marked \"Not recorded\".",
+      "checks": [
+        "Commands and artifact locations are concrete.",
+        "Approval boundaries retain their scope.",
+        "The next action is clear, and uncompleted work stays described as uncompleted.",
+        "A reader without the original conversation can start from the note alone.",
+        "Missing information is marked \"Not recorded\" and not guessed."
+      ],
+      "boundaries": [
+        "No approval or decision is recorded that the owner did not make.",
+        "No unfinished work is described as finished.",
+        "The note does not choose between several next actions. Extra candidates go to the owner as open questions.",
+        "The note records state. It does not continue the work."
+      ],
+      "sources": [
+        {
+          "label": "Anthropic: Effective harnesses for long-running agents",
+          "publisher": "Anthropic",
+          "published": "2025-11-26",
+          "read": "2026-11-10",
+          "url": "https://www.anthropic.com/research/effective-harnesses-for-long-running-agents",
+          "grounds": "The article starts from the fact that each new session begins with no memory of the previous one, and describes progress notes, a clean state and clear artifacts left for the next session. We adapt that to a short note a person hands over."
+        },
+        {
+          "label": "Anthropic: Harness design for long-running apps",
+          "publisher": "Anthropic",
+          "published": "2026-03-24",
+          "read": "2026-11-10",
+          "url": "https://www.anthropic.com/research/harness-design-long-running-apps",
+          "grounds": "Describes a structured handoff that carries the previous state and the next steps, and communication between steps through files."
+        },
+        {
+          "label": "Claude Code Docs: Best practices for Claude Code",
+          "publisher": "Anthropic (Claude Code documentation)",
+          "published": "Living page, no fixed date",
+          "read": "2026-11-10",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "grounds": "Supports writing down what cannot be found by reading the repository: decisions, procedures and environment details."
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  var DATA = JSON.parse(document.getElementById('workflow-data').textContent);
+  var CARDS = DATA.workflows;
+  var STORAGE_KEY = 'beam-workflow-library:favourites:v1';
+  var CLAWD = document.getElementById('clawd-src').getAttribute('src');
+  var ARROW = ' \u2192 ';
+
+  var state = { q: '', category: null, role: null, favOnly: false, favs: [], storageOk: true, selected: null };
+  var lastOpened = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var elQ = $('q'), elReset = $('reset'), elStatus = $('status'), elList = $('results');
+  var elEmpty = $('empty'), elEmptyWhy = $('empty-why'), elDetail = $('detail'), elFavOnly = $('favonly');
+
+  function el(tag, attrs, kids) {
+    var node = document.createElement(tag), k;
+    if (attrs) {
+      for (k in attrs) {
+        if (!Object.prototype.hasOwnProperty.call(attrs, k)) continue;
+        if (k === 'text') node.textContent = attrs[k];
+        else if (k === 'class') node.className = attrs[k];
+        else node.setAttribute(k, attrs[k]);
+      }
+    }
+    (kids || []).forEach(function (c) {
+      if (c == null) return;
+      node.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+    });
+    return node;
+  }
+  function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+  function cardById(id) {
+    for (var i = 0; i < CARDS.length; i++) if (CARDS[i].id === id) return CARDS[i];
+    return null;
+  }
+  function roleNames(card) { return card.roles.map(function (r) { return r.role; }); }
+  function catClass(card) { return 'tag c' + DATA.categories.indexOf(card.category); }
+
+  /* ---------- favourites (localStorage) ---------- */
+  function loadFavs() {
+    try {
+      var probe = STORAGE_KEY + ':probe';
+      window.localStorage.setItem(probe, '1');
+      window.localStorage.removeItem(probe);
+      var raw = window.localStorage.getItem(STORAGE_KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      state.favs = Array.isArray(arr) ? arr.filter(function (id) { return !!cardById(id); }) : [];
+      state.storageOk = true;
+    } catch (e) {
+      state.storageOk = false;
+    }
+    $('storage-notice').hidden = state.storageOk;
+  }
+  function saveFavs() {
+    if (!state.storageOk) return;
+    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state.favs)); }
+    catch (e) { state.storageOk = false; $('storage-notice').hidden = false; }
+  }
+  function isFav(id) { return state.favs.indexOf(id) !== -1; }
+  function toggleFav(id) {
+    var i = state.favs.indexOf(id);
+    if (i === -1) state.favs.push(id); else state.favs.splice(i, 1);
+    state.favs.sort();
+    saveFavs();
+    renderList();
+    syncDetailFav();
+  }
+  function favLabel(on) { return on ? '\u2605 Favourite' : '\u2606 Add favourite'; }
+
+  /* ---------- search and filters ---------- */
+  function tokens() { return state.q.toLowerCase().split(/\s+/).filter(Boolean); }
+  function matchInfo(card, toks) {
+    var fields = { title: card.title.toLowerCase(), task: card.task.toLowerCase(), prompt: card.prompt.toLowerCase() };
+    var all = fields.title + '\n' + fields.task + '\n' + fields.prompt;
+    for (var i = 0; i < toks.length; i++) if (all.indexOf(toks[i]) === -1) return null;
+    var where = [];
+    ['title', 'task', 'prompt'].forEach(function (f) {
+      for (var j = 0; j < toks.length; j++) if (fields[f].indexOf(toks[j]) !== -1) { where.push(f); break; }
+    });
+    return where;
+  }
+  function visibleCards() {
+    var toks = tokens(), out = [];
+    CARDS.forEach(function (card) {
+      if (state.category && card.category !== state.category) return;
+      if (state.role && roleNames(card).indexOf(state.role) === -1) return;
+      if (state.favOnly && !isFav(card.id)) return;
+      var where = toks.length ? matchInfo(card, toks) : [];
+      if (where === null) return;
+      out.push({ card: card, where: where });
+    });
+    return out;
+  }
+  function anyActive() { return !!(state.q.trim() || state.category || state.role || state.favOnly); }
+  function activeSummary() {
+    var parts = [];
+    if (state.q.trim()) parts.push('search \u201c' + state.q.trim() + '\u201d');
+    if (state.category) parts.push('category ' + state.category);
+    if (state.role) parts.push('role ' + state.role);
+    if (state.favOnly) parts.push('favourites only');
+    return parts.join(' + ');
+  }
+  function resetAll(focusSearch) {
+    state.q = ''; state.category = null; state.role = null; state.favOnly = false;
+    elQ.value = '';
+    renderChips();
+    renderList();
+    if (focusSearch) elQ.focus();
+  }
+
+  function renderChips() {
+    var cat = $('chips-cat'), role = $('chips-role');
+    clear(cat); clear(role);
+    DATA.categories.forEach(function (name) {
+      var b = el('button', { type: 'button', 'class': 'chip', 'aria-pressed': String(state.category === name), text: name });
+      b.addEventListener('click', function () {
+        state.category = state.category === name ? null : name;
+        renderChips(); renderList();
+        focusChip(cat, name);
+      });
+      cat.appendChild(b);
+    });
+    DATA.roles.forEach(function (r) {
+      if (r.name === 'Owner') return; /* the owner closes every sequence, so it would not filter anything */
+      var b = el('button', { type: 'button', 'class': 'chip', 'aria-pressed': String(state.role === r.name), title: r.responsibility, text: r.name });
+      b.addEventListener('click', function () {
+        state.role = state.role === r.name ? null : r.name;
+        renderChips(); renderList();
+        focusChip(role, r.name);
+      });
+      role.appendChild(b);
+    });
+    elFavOnly.setAttribute('aria-pressed', String(state.favOnly));
+  }
+  function focusChip(group, name) {
+    var bs = group.querySelectorAll('button');
+    for (var i = 0; i < bs.length; i++) if (bs[i].textContent === name) { bs[i].focus(); return; }
+  }
+
+  function renderList() {
+    var rows = visibleCards();
+    clear(elList);
+    rows.forEach(function (row) {
+      var card = row.card, on = isFav(card.id);
+      var link = el('a', { href: '#' + card.id, text: card.title });
+      var fav = el('button', { type: 'button', 'class': 'fav', 'aria-pressed': String(on), 'aria-label': (on ? 'Remove from favourites: ' : 'Add to favourites: ') + card.title, text: favLabel(on) });
+      fav.addEventListener('click', function () {
+        toggleFav(card.id);
+        var again = elList.querySelector('[data-id="' + card.id + '"] .fav');
+        if (again) again.focus(); else elFavOnly.focus();
+      });
+      var found = row.where.length ? el('span', { 'class': 'found', text: 'Found in ' + row.where.join(', ') }) : el('span');
+      var li = el('li', { 'class': 'card' + (state.selected === card.id ? ' is-open' : ''), 'data-id': card.id }, [
+        el('div', { 'class': 'meta' }, [el('span', { 'class': 'cid', text: card.id }), el('span', { 'class': catClass(card), text: card.category })]),
+        el('h3', null, [link]),
+        el('p', { 'class': 'task', text: card.task }),
+        el('p', { 'class': 'seq', text: roleNames(card).join(ARROW) }),
+        el('div', { 'class': 'foot' }, [found, fav])
+      ]);
+      elList.appendChild(li);
+    });
+    var total = CARDS.length, n = rows.length, active = anyActive();
+    elStatus.textContent = active
+      ? 'Showing ' + n + ' of ' + total + ' workflows for ' + activeSummary() + '.'
+      : 'Showing all ' + total + ' workflows.';
+    elEmpty.hidden = n !== 0;
+    elList.hidden = n === 0;
+    if (n === 0) {
+      elEmptyWhy.textContent = (state.favOnly && state.favs.length === 0 && !state.q.trim() && !state.category && !state.role)
+        ? 'You have no favourites yet. Add one with the star on any workflow, then come back to this filter.'
+        : 'Nothing fits ' + activeSummary() + '. Change a filter or reset everything.';
+    }
+    elReset.disabled = !active;
+    elFavOnly.textContent = 'Favourites only (' + state.favs.length + ')';
+  }
+
+  /* ---------- Markdown export ---------- */
+  function slug(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
+  function fileName(card) { return card.id + '-' + slug(card.title) + '.md'; }
+  function fence(text) {
+    var longest = 0, m, re = /`+/g;
+    while ((m = re.exec(text)) !== null) longest = Math.max(longest, m[0].length);
+    return new Array(Math.max(3, longest + 1) + 1).join('`');
+  }
+  function toMarkdown(card) {
+    var f = fence(card.prompt), L = [];
+    L.push('# ' + card.title, '');
+    L.push('- **ID:** ' + card.id);
+    L.push('- **Category:** ' + card.category);
+    L.push('- **Role sequence:** ' + roleNames(card).join(ARROW));
+    L.push('- **Scope seed:** ' + card.seed_id);
+    L.push('- **Library:** ' + DATA.library.name + ' ' + DATA.library.version + ' (' + DATA.library.owner + ')', '');
+    L.push('## Task', '', card.task, '');
+    L.push('## Inputs', '');
+    card.inputs.forEach(function (x) { L.push('- ' + x); });
+    L.push('', '## Role sequence', '');
+    card.roles.forEach(function (r, i) { L.push((i + 1) + '. **' + r.role + '**: ' + r.does + ' Hands on: ' + r.hands_on); });
+    L.push('', '## Steps', '');
+    card.steps.forEach(function (x, i) { L.push((i + 1) + '. ' + x); });
+    L.push('', '## Prompt', '', f + 'text', card.prompt, f, '');
+    L.push('## Completion checks', '');
+    card.checks.forEach(function (x) { L.push('- [ ] ' + x); });
+    L.push('', '## Authority boundaries', '');
+    card.boundaries.forEach(function (x) { L.push('- ' + x); });
+    L.push('', '## Sources', '');
+    card.sources.forEach(function (s) {
+      L.push('- [' + s.label + '](' + s.url + ')');
+      L.push('  - Publisher: ' + s.publisher);
+      L.push('  - Published: ' + s.published + '. Read: ' + s.read + '.');
+      L.push('  - What this card takes from it: ' + s.grounds);
+    });
+    L.push('', '## Note', '', DATA.library.adaptation_note, '', DATA.library.sources_note, '');
+    return L.join('\n');
+  }
+  function exportCard(card, say, box) {
+    var md = toMarkdown(card), name = fileName(card);
+    try {
+      var blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = el('a', { href: url, download: name });
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+      say('Export started: ' + name + '. If no file was saved, open \u201cMarkdown text\u201d below and copy it.');
+    } catch (e) {
+      box.open = true;
+      say('This browser blocked the download. The Markdown is shown below so you can copy it.');
+    }
+  }
+
+  /* ---------- copy ---------- */
+  function selectAll(area) {
+    area.focus();
+    area.select();
+    try { area.setSelectionRange(0, area.value.length); } catch (e) { /* not supported everywhere */ }
+  }
+  function copyText(text, area, say, what) {
+    var ok = function () { say(what + ' copied: ' + text.length + ' characters, line breaks kept.'); };
+    var fallback = function () {
+      selectAll(area);
+      var done = false;
+      try { done = document.execCommand('copy'); } catch (e) { done = false; }
+      if (done) ok();
+      else say('The browser did not allow copying. The text is selected: press Ctrl+C (Cmd+C on a Mac).');
+    };
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      navigator.clipboard.writeText(text).then(ok, fallback);
+    } else {
+      fallback();
+    }
+  }
+  function fitHeight(area) {
+    area.style.height = 'auto';
+    area.style.height = Math.min(Math.max(area.scrollHeight + 4, 320), 5000) + 'px';
+  }
+
+  /* ---------- detail view ---------- */
+  function section(title, kids, note) {
+    var s = el('section', { 'class': 'sec' }, [el('h3', { text: title })]);
+    if (note) s.appendChild(el('p', { 'class': 'note', text: note }));
+    kids.forEach(function (k) { s.appendChild(k); });
+    return s;
+  }
+  function listOf(tag, cls, items) {
+    return el(tag, cls ? { 'class': cls } : null, items.map(function (x) { return el('li', { text: x }); }));
+  }
+  function renderPlaceholder() {
+    clear(elDetail);
+    elDetail.appendChild(el('div', { 'class': 'placeholder' }, [
+      el('img', { src: CLAWD, alt: '', width: '693', height: '527' }),
+      el('h2', { text: 'Choose a workflow' }),
+      el('p', { text: 'Open any workflow to read its inputs, role sequence, steps, full prompt, checks, boundaries and sources.' })
+    ]));
+  }
+  function syncDetailFav() {
+    var b = elDetail.querySelector('.fav');
+    if (!b || !state.selected) return;
+    var on = isFav(state.selected);
+    b.setAttribute('aria-pressed', String(on));
+    b.textContent = favLabel(on);
+  }
+  function renderDetail(card) {
+    clear(elDetail);
+    var live = el('p', { 'class': 'livemsg', role: 'status', 'aria-live': 'polite' });
+    var say = function (msg) { live.textContent = ''; setTimeout(function () { live.textContent = msg; }, 30); };
+
+    var back = el('button', { type: 'button', 'class': 'btn quiet back', text: '\u2190 All workflows' });
+    back.addEventListener('click', closeDetail);
+
+    var title = el('h2', { tabindex: '-1', id: 'detail-title', text: card.title });
+    var fav = el('button', { type: 'button', 'class': 'fav', 'aria-pressed': String(isFav(card.id)), text: favLabel(isFav(card.id)) });
+    fav.addEventListener('click', function () { toggleFav(card.id); fav.focus(); });
+
+    var prompt = el('textarea', { 'class': 'prompt', readonly: 'readonly', spellcheck: 'false', wrap: 'soft', id: 'prompt-text', 'aria-label': 'Full prompt for ' + card.title });
+    prompt.value = card.prompt;
+    var copy = el('button', { type: 'button', 'class': 'btn primary', id: 'copy-prompt', text: 'Copy full prompt' });
+    copy.addEventListener('click', function () { copyText(card.prompt, prompt, say, 'Prompt'); });
+    var sel = el('button', { type: 'button', 'class': 'btn quiet', id: 'select-prompt', text: 'Select prompt text' });
+    sel.addEventListener('click', function () { selectAll(prompt); say('Prompt selected. Press Ctrl+C (Cmd+C on a Mac) to copy it.'); });
+
+    var mdArea = el('textarea', { 'class': 'md', readonly: 'readonly', spellcheck: 'false', wrap: 'soft', id: 'md-text', 'aria-label': 'Markdown export of ' + card.title });
+    mdArea.value = toMarkdown(card);
+    var mdSel = el('button', { type: 'button', 'class': 'btn quiet', text: 'Copy Markdown text' });
+    mdSel.addEventListener('click', function () { copyText(mdArea.value, mdArea, say, 'Markdown'); });
+    var mdBox = el('details', { 'class': 'mdbox', id: 'md-box' }, [
+      el('summary', { text: 'Markdown text (for manual copy)' }),
+      el('p', { 'class': 'note', text: 'The same text the export button saves as ' + fileName(card) + '.' }),
+      mdSel, mdArea
+    ]);
+    var exp = el('button', { type: 'button', 'class': 'btn', id: 'export-md', text: 'Export as Markdown' });
+    exp.addEventListener('click', function () { exportCard(card, say, mdBox); });
+
+    var roles = el('ol', { 'class': 'roles' }, card.roles.map(function (r) {
+      return el('li', null, [el('strong', { text: r.role }), ' ', el('span', { text: r.does }), el('span', { 'class': 'hand', text: 'Hands on: ' + r.hands_on })]);
+    }));
+    var roleSec = el('section', { 'class': 'sec' }, [
+      el('div', { 'class': 'rolehead' }, [el('img', { src: CLAWD, alt: '', width: '693', height: '527' }), el('h3', { text: 'Role sequence' })]),
+      el('p', { 'class': 'note', text: 'Roles are responsibilities carried out in order. You hand the work from one to the next. They are not separate workers, and nothing here runs in parallel.' }),
+      roles
+    ]);
+
+    var sources = el('ul', { 'class': 'sources' }, card.sources.map(function (s) {
+      return el('li', null, [
+        el('a', { href: s.url, target: '_blank', rel: 'noopener noreferrer', text: s.label }),
+        el('span', { 'class': 'smeta', text: s.publisher + '. Published: ' + s.published + '. Read: ' + s.read + '. ' + s.url }),
+        el('span', { text: 'What this card takes from it: ' + s.grounds })
+      ]);
+    }));
+
+    [
+      back,
+      el('div', { 'class': 'meta' }, [el('span', { 'class': 'cid', text: card.id }), el('span', { 'class': catClass(card), text: card.category })]),
+      title,
+      el('p', { 'class': 'task', text: card.task }),
+      el('div', { 'class': 'actions' }, [fav, exp]),
+      live,
+      section('Inputs', [listOf('ul', null, card.inputs)], 'What you need to have ready before you paste the prompt.'),
+      roleSec,
+      section('Steps', [listOf('ol', null, card.steps)]),
+      section('Prompt', [el('div', { 'class': 'promptbar' }, [copy, sel]), prompt], 'Replace every {{PLACEHOLDER}} before use. State the tools the session really has; the prompt does not assume any.'),
+      section('Completion checks', [listOf('ul', 'checks', card.checks)], 'The work is complete when each line can be answered yes.'),
+      section('Authority boundaries', [listOf('ul', null, card.boundaries)]),
+      section('Sources', [sources], 'Links open in a new tab only when you choose one. Nothing is fetched until then.'),
+      section('Export', [mdBox], 'One UTF-8 Markdown file with every field of this card and its source links.'),
+      section('Note', [el('p', { 'class': 'note', text: DATA.library.adaptation_note })])
+    ].forEach(function (n) { elDetail.appendChild(n); });
+
+    fitHeight(prompt);
+    mdBox.addEventListener('toggle', function () { if (mdBox.open) fitHeight(mdArea); });
+  }
+  function closeDetail() {
+    if (window.location.hash) window.location.hash = '';
+    else route(true);
+  }
+  function route(userNav) {
+    var id = '';
+    try { id = decodeURIComponent(window.location.hash.replace(/^#/, '')); } catch (e) { id = ''; }
+    var card = cardById(id);
+    if (card) {
+      state.selected = card.id;
+      lastOpened = card.id;
+      document.body.setAttribute('data-view', 'detail');
+      renderDetail(card);
+      renderList();
+      if (userNav) {
+        var t = $('detail-title');
+        t.focus({ preventScroll: true });
+        if (window.matchMedia('(max-width: 959px)').matches) window.scrollTo(0, 0);
+        else if (elDetail.getBoundingClientRect().top < 0) elDetail.scrollIntoView();
+      }
+    } else {
+      state.selected = null;
+      document.body.setAttribute('data-view', 'list');
+      renderPlaceholder();
+      renderList();
+      if (userNav && lastOpened) {
+        var link = elList.querySelector('[data-id="' + lastOpened + '"] a');
+        if (link) link.focus();
+      }
+    }
+  }
+
+  /* ---------- wiring ---------- */
+  elQ.addEventListener('input', function () { state.q = elQ.value; renderList(); });
+  elQ.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && elQ.value) { e.preventDefault(); elQ.value = ''; state.q = ''; renderList(); }
+  });
+  elReset.addEventListener('click', function () { resetAll(true); });
+  $('empty-reset').addEventListener('click', function () { resetAll(true); });
+  elFavOnly.addEventListener('click', function () { state.favOnly = !state.favOnly; renderChips(); renderList(); });
+  document.addEventListener('keydown', function (e) {
+    var tag = (e.target && e.target.tagName) || '';
+    var typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+    if (e.key === '/' && !typing && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (document.body.getAttribute('data-view') === 'detail' && window.matchMedia('(max-width: 959px)').matches) return;
+      e.preventDefault(); elQ.focus(); elQ.select();
+    } else if (e.key === 'Escape' && !typing && state.selected && window.matchMedia('(max-width: 959px)').matches) {
+      e.preventDefault(); closeDetail();
+    }
+  });
+  window.addEventListener('hashchange', function () { route(true); });
+  window.addEventListener('storage', function (e) {
+    if (e.key === STORAGE_KEY) { loadFavs(); renderList(); syncDetailFav(); }
+  });
+
+  /* ---------- start ---------- */
+  $('lib-version').textContent = DATA.library.version;
+  $('empty-img').setAttribute('src', CLAWD);
+  $('about-note').textContent = DATA.library.adaptation_note;
+  $('about-sources').textContent = DATA.library.sources_note;
+  (DATA.library.assets || []).forEach(function (a) {
+    $('about-assets').appendChild(el('li', null, [
+      el('code', { text: a.file }), ' \u00b7 recorded source: ', el('code', { text: a.source }),
+      ' \u00b7 SHA-256 ', el('code', { text: a.sha256 }), ' \u00b7 ' + a.processing
+    ]));
+  });
+  loadFavs();
+  renderChips();
+  route(false);
+})();
+</script>
+</body>
+</html>

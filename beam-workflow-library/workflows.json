@@ -1,0 +1,505 @@
+{
+  "library": {
+    "name": "Beam Workflow Library",
+    "version": "v1",
+    "owner": "beamnxw",
+    "language": "en",
+    "card_count": 6,
+    "adaptation_note": "Original beamnxw material. These six cards are our own adaptations of public guidance, not official Anthropic presets. The library prepares instructions for a person to paste into a session; it does not run a model or orchestrate agents. Roles are responsibilities and handoffs carried out in sequence, not separate workers and not evidence of parallel execution. No prompt in this library has been tested in a separate Claude session.",
+    "sources_note": "The three source pages were read by plain HTTP request on 2026-11-10 and are used as methodological grounding only. Each source line says what the card takes from the page.",
+    "assets": [
+      {
+        "file": "assets/clawd.png",
+        "source": "https://claude.dev/shared/img/clawd-mark.png",
+        "sha256": "874eeac471afa1d5675b0ccf872d9396f279f3d064bf2a5d5efe5c90f560b9f4",
+        "processing": "unmodified copy"
+      },
+      {
+        "file": "assets/viktor-wordmark.svg",
+        "source": "https://viktor.com/brand",
+        "sha256": "ff64f87a6c3da30ae9f091466b4e42d4a384c372f4fb8b9b0460a3d3c9364836",
+        "processing": "unmodified copy"
+      }
+    ]
+  },
+  "categories": [
+    "Research & writing",
+    "Product build",
+    "Quality & handoff"
+  ],
+  "roles": [
+    {
+      "name": "Researcher",
+      "responsibility": "Finds out what is actually there: opens sources or reads the existing snapshot, and records what was seen."
+    },
+    {
+      "name": "Writer",
+      "responsibility": "Turns accepted material into a readable draft without adding facts of its own."
+    },
+    {
+      "name": "Planner",
+      "responsibility": "Fixes scope and says what done looks like before work starts."
+    },
+    {
+      "name": "Builder",
+      "responsibility": "Implements exactly what was agreed and keeps the work runnable."
+    },
+    {
+      "name": "Evaluator",
+      "responsibility": "Checks a result against its contract or sources and reports what passed, failed or could not be checked."
+    },
+    {
+      "name": "Recorder",
+      "responsibility": "Writes down what was really done, run and left open, so the next reader does not have to guess."
+    },
+    {
+      "name": "Owner",
+      "responsibility": "The human. Supplies inputs, hands work between roles, and makes every decision and approval."
+    }
+  ],
+  "workflows": [
+    {
+      "id": "BWL-001",
+      "seed_id": "research-brief",
+      "title": "Research a technical topic",
+      "category": "Research & writing",
+      "task": "Answer one scoped technical question from primary sources with a citation for every claim, keeping evidence, vendor claims and inference apart, and saying plainly what could not be established.",
+      "inputs": [
+        "The question, and the reader it is for",
+        "Scope: what is in, what is out, and how date-sensitive the answer is",
+        "Permitted sources, and any that must not be used",
+        "Required output format and length",
+        "Tools the session really has (web access, file reading, or none), plus any pasted material"
+      ],
+      "roles": [
+        {
+          "role": "Planner",
+          "does": "Restates the question, fixes the scope and says what a complete answer must contain.",
+          "hands_on": "A one-paragraph research plan, or a clarifying question for the owner."
+        },
+        {
+          "role": "Researcher",
+          "does": "Opens the permitted sources and logs what each one actually says.",
+          "hands_on": "A source log and a draft report."
+        },
+        {
+          "role": "Evaluator",
+          "does": "Checks every consequential claim against its cited source and moves unsupported claims out.",
+          "hands_on": "The checked report with labelled claims and a \"Not established\" section."
+        },
+        {
+          "role": "Owner",
+          "does": "Decides whether the report answers the question and what it may be used for.",
+          "hands_on": "A decision: accept, ask for more, or stop."
+        }
+      ],
+      "steps": [
+        "Fill in the placeholders and list the tools the session really has.",
+        "Planner pass: restate the question and scope. Answer any clarifying question before research starts.",
+        "Researcher pass: read the permitted sources and log title, publisher, date, URL and use for each.",
+        "Draft the report with the answer first and every claim labelled Evidence, Vendor claim or Inference.",
+        "Evaluator pass: trace each claim to its source and move anything unsupported to \"Not established\".",
+        "Read the report, the source log and the open questions, then decide what happens next."
+      ],
+      "prompt": "You are helping me research one technical question. Work through the three passes below in order. Each pass is a responsibility, not a separate worker. I am the operator: I supply the inputs, hand work from one pass to the next, and make every decision about the result.\n\n<inputs>\nQuestion: {{QUESTION}}\nReader: {{TARGET_READER}}\nIn scope: {{IN_SCOPE}}\nOut of scope: {{OUT_OF_SCOPE}}\nDate sensitivity: {{DATE_SENSITIVITY}}\nPermitted sources: {{PERMITTED_SOURCES}}\nSources not to use: {{EXCLUDED_SOURCES}}\nOutput format and length: {{OUTPUT_FORMAT}}\n</inputs>\n\n<tools>\nTools available in this session: {{TOOLS_AVAILABLE}}\nIf a tool is not listed above, you do not have it. Say what you could not do instead of describing a result you did not observe.\n</tools>\n\n<material>\n{{PASTED_MATERIAL_OR_NONE}}\n</material>\n\nIf you have no tool that can open a source, work only from the text under <material> and say so at the top of the report.\n\nPass 1 - Planner\nRestate the question in one sentence. List what is in scope, what is out, and what a complete answer must contain. If the question can be read in two materially different ways, stop and ask me which one I mean before going on.\n\nPass 2 - Researcher\nOpen each permitted source you can reach. Prefer primary sources: the original documentation, paper, specification, changelog or statement from the party responsible. For every source you actually opened, log its title, publisher, date, URL and what you used it for. Then draft the report.\n\nPass 3 - Evaluator\nRe-read the draft as someone who did not write it. For each consequential factual claim, find the passage in the cited source that supports it. If you cannot find one, move the claim to \"Not established\" or delete it. Do not soften the wording to keep an unsupported claim in.\n\nOutput format\n1. Answer: the direct answer to the question in a short paragraph.\n2. Evidence: numbered claims. Label each one [Evidence] (a primary source states it), [Vendor claim] (a company says it about its own product) or [Inference] (your reasoning from the evidence). End each claim with its citation: the number of the source in the list below.\n3. Not established: what you looked for and could not confirm, and why.\n4. Sources: the log from Pass 2, with secondary sources marked as secondary.\n5. Open questions for the owner.\n\nRules\n- Cite only sources you opened in this session or that I pasted. Never cite from memory.\n- Give the date of every source and say where the answer may have changed since.\n- Keep quotations short and exact. Paraphrase the rest.\n- State uncertainty plainly. Do not turn \"probably\" into \"is\".\n- Stay inside the question. Do not recommend a decision unless I asked for one.\n\nBefore you finish, answer each line with yes, no or not checked:\n- Every consequential claim has a source that directly supports it.\n- Evidence, vendor claims and inference are labelled separately.\n- Everything that could not be confirmed is listed under \"Not established\".\n- The report answers the question as restated in Pass 1.",
+      "checks": [
+        "Every consequential factual claim has a directly supporting source.",
+        "Evidence that could not be found is stated, not papered over.",
+        "The report answers the question that was supplied.",
+        "Evidence, vendor claims and inference are labelled separately.",
+        "Every cited source was opened in the session or pasted by the operator."
+      ],
+      "boundaries": [
+        "No conclusions or recommendations beyond what the sources support.",
+        "No browsing or file access unless the operator listed that tool.",
+        "An Evaluator pass in the same session is a self-check, not an independent review. For independence, paste the draft and Pass 3 into a fresh session.",
+        "The owner decides whether the report is good enough to rely on or publish."
+      ],
+      "sources": [
+        {
+          "label": "Claude Code Docs: Best practices for Claude Code",
+          "publisher": "Anthropic (Claude Code documentation)",
+          "published": "Living page, no fixed date",
+          "read": "2026-11-10",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "grounds": "Loose support only. We take the general shape: give the session the context it cannot see, be specific about what done looks like, and give it something to check its work against. The page is about coding sessions; the citation and labelling rules are our own adaptation."
+        }
+      ]
+    },
+    {
+      "id": "BWL-002",
+      "seed_id": "technical-guide",
+      "title": "Turn research into a technical guide",
+      "category": "Research & writing",
+      "task": "Turn a research report the owner has accepted into an original guide with a stated audience, prerequisites, concrete steps and limits, without inventing firsthand use.",
+      "inputs": [
+        "The accepted research report with its source list (for example the output of BWL-001)",
+        "Audience, and what they should be able to do afterwards",
+        "Prerequisites the reader is assumed to have",
+        "Examples that were really run or verified, and by whom (or none)",
+        "Format, length and tone",
+        "Tools the session really has"
+      ],
+      "roles": [
+        {
+          "role": "Planner",
+          "does": "Fixes audience and purpose and outlines the guide, mapping each section to claims in the report.",
+          "hands_on": "An outline and a list of gaps in the report."
+        },
+        {
+          "role": "Writer",
+          "does": "Drafts the guide from the report only, keeping each claim attached to its source.",
+          "hands_on": "A draft with every step marked as verified example or not run here."
+        },
+        {
+          "role": "Evaluator",
+          "does": "Traces each step and claim back to the report and removes implied firsthand experience.",
+          "hands_on": "The checked draft and a list of changes."
+        },
+        {
+          "role": "Owner",
+          "does": "Edits, accepts or returns the guide and decides whether it is published.",
+          "hands_on": "A decision on the draft."
+        }
+      ],
+      "steps": [
+        "Paste the research report and fill in audience, purpose and prerequisites.",
+        "Planner pass: review the outline and settle any gap that would make a step misleading.",
+        "Writer pass: draft audience, prerequisites, numbered steps with expected results, limits and sources.",
+        "Mark each step \"Verified example supplied\" or \"From sources, not run here\".",
+        "Evaluator pass: trace every step and claim to the report and remove firsthand wording that was not supplied.",
+        "Read the guide and the gap list, then decide what happens next."
+      ],
+      "prompt": "You are helping me turn a research report into a technical guide. Work through the three passes below in order. Each pass is a responsibility, not a separate worker. I am the operator: I supply the inputs, hand work from one pass to the next, and make every decision about the result.\n\n<inputs>\nAudience: {{AUDIENCE}}\nWhat the reader should be able to do afterwards: {{PURPOSE}}\nPrerequisites the reader already has: {{PREREQUISITES}}\nFormat, length and tone: {{FORMAT_LENGTH_TONE}}\n</inputs>\n\n<research_report>\n{{RESEARCH_REPORT_WITH_SOURCES}}\n</research_report>\n\n<verified_examples>\n{{EXAMPLES_ACTUALLY_RUN_AND_BY_WHOM_OR_NONE}}\n</verified_examples>\n\n<tools>\nTools available in this session: {{TOOLS_AVAILABLE}}\nIf a tool is not listed above, you do not have it. Say what you could not do instead of describing a result you did not observe.\n</tools>\n\nThe research report is the only source of facts for this guide. Do not add facts from memory or from tools, even where the report looks incomplete.\n\nPass 1 - Planner\nWrite a short outline. Next to each section, note which claims in the report it rests on. List anything the guide needs that the report does not cover. If a gap would make a step unsafe or misleading, stop and ask me before drafting.\n\nPass 2 - Writer\nDraft the guide in this order:\n1. Who this is for, and what they will be able to do.\n2. Prerequisites.\n3. Steps, numbered. Each step says what to do and what the reader should see when it worked.\n4. Limits: what the guide does not cover, known failure cases, and anything date-sensitive.\n5. Sources, carried over from the report with their links.\nMark every step either \"Verified example supplied\" (it appears under <verified_examples>) or \"From sources, not run here\".\n\nPass 3 - Evaluator\nRe-read the draft as someone who did not write it. Trace every step and every factual claim back to the report. Remove or flag anything you cannot trace. Remove any sentence that implies firsthand use, such as \"I ran\", \"we tested\" or \"in our experience\", unless it quotes a supplied verified example and names who ran it.\n\nOutput format\n- The guide.\n- Gaps: what the report did not cover.\n- Changes made in Pass 3, one line each.\n\nRules\n- No invented firsthand experience, results, timings or savings.\n- Keep each claim attached to its source link from the report.\n- Write for the stated audience. Explain a term the first time it appears if the prerequisites do not cover it.\n- Do not describe the guide as reviewed, approved or tested. That is my decision.\n\nBefore you finish, answer each line with yes, no or not checked:\n- Every step and claim traces to the research report.\n- Every step states its expected result.\n- No sentence claims firsthand use that was not supplied.\n- The limits section is present and specific.\n- Source links are retained.",
+      "checks": [
+        "No invented firsthand experience.",
+        "Every step identifies its expected result.",
+        "Claims retain their source links.",
+        "Every step and claim traces to the research report.",
+        "A specific limits section is present."
+      ],
+      "boundaries": [
+        "No new facts beyond the research report, even where it looks incomplete.",
+        "No statement that the guide was tested, reviewed or approved.",
+        "No results, timings or savings that the report does not contain.",
+        "Publication is the owner's decision."
+      ],
+      "sources": [
+        {
+          "label": "Claude Code Docs: Best practices for Claude Code",
+          "publisher": "Anthropic (Claude Code documentation)",
+          "published": "Living page, no fixed date",
+          "read": "2026-11-10",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "grounds": "Loose support only. We take two ideas: supply the context the session cannot find for itself (here, audience and prerequisites), and have the work re-read by a reviewer that did not write it. The page is about coding sessions; the guide structure and the firsthand-use rule are our own adaptation."
+        }
+      ]
+    },
+    {
+      "id": "BWL-003",
+      "seed_id": "feature-contract",
+      "title": "Plan one product feature",
+      "category": "Product build",
+      "task": "Turn one product need into a bounded feature contract: what is in, what is out, what will be delivered, and checks an observer can mark pass or fail.",
+      "inputs": [
+        "The real product goal, in the owner's words",
+        "The existing app or repository and its environment (or a description, if the session cannot read it)",
+        "Owner constraints: stack, limits, things that must not change",
+        "Work already known to be out of scope",
+        "Tools the session really has"
+      ],
+      "roles": [
+        {
+          "role": "Researcher",
+          "does": "Reads the parts of the existing app the feature touches and separates what was observed from what was told.",
+          "hands_on": "A short current-state note."
+        },
+        {
+          "role": "Planner",
+          "does": "Writes a contract for exactly one feature: scope, deliverables and checks.",
+          "hands_on": "A proposed feature contract."
+        },
+        {
+          "role": "Evaluator",
+          "does": "Tests each check: could a stranger carry it out and mark it pass or fail?",
+          "hands_on": "The contract with weak checks rewritten or listed as decisions."
+        },
+        {
+          "role": "Owner",
+          "does": "Answers the listed decisions and agrees, changes or rejects the contract.",
+          "hands_on": "An agreed contract. Only the owner can make it agreed."
+        }
+      ],
+      "steps": [
+        "Fill in the goal, environment and constraints, and list the tools the session really has.",
+        "Researcher pass: note the current state as Observed and Told.",
+        "Planner pass: write the contract for one feature and name anything left out.",
+        "Evaluator pass: rewrite every check into an action with an expected observable result.",
+        "Answer the \"Decisions needed\" list.",
+        "Agree the contract explicitly, or send it back. Building starts only after that."
+      ],
+      "prompt": "You are helping me plan one product feature. The result is a feature contract, not code. Work through the three passes below in order. Each pass is a responsibility, not a separate worker. I am the operator: I supply the inputs, hand work from one pass to the next, and make every decision about the result.\n\n<inputs>\nProduct goal, in my words: {{PRODUCT_GOAL}}\nExisting app or repository: {{APP_OR_REPO_LOCATION_OR_DESCRIPTION}}\nEnvironment: {{ENVIRONMENT}}\nConstraints: {{OWNER_CONSTRAINTS}}\nAlready out of scope: {{KNOWN_OUT_OF_SCOPE}}\n</inputs>\n\n<tools>\nTools available in this session: {{TOOLS_AVAILABLE}}\nIf a tool is not listed above, you do not have it. Say what you could not do instead of describing a result you did not observe.\n</tools>\n\nPass 1 - Researcher\nIf you can read the existing app or repository, read the parts this feature touches and note what is there. If you cannot, work from my description. Keep two short lists: \"Observed\" (you read it yourself) and \"Told\" (from my description, not checked).\n\nPass 2 - Planner\nWrite a contract for exactly one feature. If the goal needs more than one, name the others and ask me which to plan first. Describe what must be delivered and how it will be checked. Leave implementation detail to the builder unless one of my constraints requires it.\n\nPass 3 - Evaluator\nTest every check in the contract with one question: could someone who has never seen this conversation carry it out and mark it pass or fail? Rewrite any check that depends on judgement, such as \"works well\" or \"looks clean\", into an action and an expected result. If you cannot, list it under \"Decisions needed\".\n\nOutput format\nFeature contract: <name>\nStatus: Proposed - not agreed\n1. Goal: one or two sentences.\n2. Current state: Observed and Told.\n3. In scope.\n4. Out of scope.\n5. Deliverables: files, screens or behaviours that will exist afterwards.\n6. Checks: a numbered list. Each check has an action, the expected observable result, and how to run it (command, URL or manual steps).\n7. Assumptions.\n8. Decisions needed from the owner.\n\nRules\n- Planning only. Do not write, edit or run application code.\n- One feature. Anything else goes under \"Out of scope\".\n- Do not choose between materially different options for me. Put the choice under \"Decisions needed\" with a one-line trade-off.\n- The contract stays \"Proposed - not agreed\" until I say otherwise. Never mark it agreed or approved yourself.\n\nBefore you finish, answer each line with yes, no or not checked:\n- In-scope and out-of-scope work are both explicit.\n- Every deliverable has at least one check.\n- Every check can be marked pass or fail by an observer.\n- Material decisions are listed for the owner and not settled silently.\n- The status line reads \"Proposed - not agreed\".",
+      "checks": [
+        "In-scope and excluded work are both explicit.",
+        "Each requirement has an observable check.",
+        "Material decisions are escalated to the owner before building.",
+        "The contract covers one feature only.",
+        "The status reads \"Proposed - not agreed\" until the owner says otherwise."
+      ],
+      "boundaries": [
+        "Planning only: no application code is written, edited or run.",
+        "The session never marks the contract agreed or approved.",
+        "No choice between materially different options is made on the owner's behalf.",
+        "Current-state statements that were not read directly stay labelled \"Told\"."
+      ],
+      "sources": [
+        {
+          "label": "Anthropic: Harness design for long-running apps",
+          "publisher": "Anthropic",
+          "published": "2026-03-24",
+          "read": "2026-11-10",
+          "url": "https://www.anthropic.com/research/harness-design-long-running-apps",
+          "grounds": "The article describes a planner that stays on product context and deliverables and avoids granular implementation detail, and a contract agreed before any code is written that says what done looks like and how it will be verified. We adapt that to a contract a human owner agrees."
+        },
+        {
+          "label": "Claude Code Docs: Best practices for Claude Code",
+          "publisher": "Anthropic (Claude Code documentation)",
+          "published": "Living page, no fixed date",
+          "read": "2026-11-10",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "grounds": "Supports saying up front what done looks like and supplying decisions and constraints the session cannot read from the code."
+        }
+      ]
+    },
+    {
+      "id": "BWL-004",
+      "seed_id": "implement-feature",
+      "title": "Build an agreed feature",
+      "category": "Product build",
+      "task": "Implement one agreed feature contract, run the checks that are actually available, and leave startup instructions and a record another session can follow.",
+      "inputs": [
+        "The agreed feature contract with its checks (for example from BWL-003)",
+        "The repository or snapshot, and its identifier (commit, tag or archive name)",
+        "How to start the app, and the check commands that exist",
+        "Commands the session may run, and what it must not touch",
+        "Tools the session really has"
+      ],
+      "roles": [
+        {
+          "role": "Builder",
+          "does": "Implements only what the contract lists, in small steps, keeping the app runnable.",
+          "hands_on": "The change and a list of files touched."
+        },
+        {
+          "role": "Evaluator",
+          "does": "Runs the contract checks the tools allow and records each as Passed, Failed or Not run.",
+          "hands_on": "Check results with evidence, tied to the snapshot."
+        },
+        {
+          "role": "Recorder",
+          "does": "Writes the build record and startup instructions from what actually ran.",
+          "hands_on": "Summary, results, startup steps and gaps."
+        },
+        {
+          "role": "Owner",
+          "does": "Reviews the record and decides whether to accept, request changes or ask for a separate evaluation (BWL-005).",
+          "hands_on": "A decision on the build."
+        }
+      ],
+      "steps": [
+        "Paste the agreed contract and fill in snapshot, commands and boundaries.",
+        "Before any change: confirm the starting snapshot and run one existing check or start the app.",
+        "Builder pass: implement the in-scope work only. Stop and ask if the contract is unclear.",
+        "Evaluator pass: run each available check and record Passed, Failed or Not run with evidence.",
+        "Recorder pass: write the summary, startup instructions from commands actually run, and the gaps.",
+        "Review the record. For an independent check, hand the snapshot to BWL-005 in a fresh session."
+      ],
+      "prompt": "You are helping me build one agreed feature. Work through the three passes below in order. Each pass is a responsibility, not a separate worker. I am the operator: I supply the inputs, hand work from one pass to the next, and make every decision about the result.\n\n<contract>\n{{AGREED_FEATURE_CONTRACT_WITH_CHECKS}}\n</contract>\n\n<inputs>\nRepository or snapshot: {{REPO_OR_SNAPSHOT_LOCATION}}\nStarting snapshot identifier (commit, tag or archive name): {{STARTING_SNAPSHOT_ID}}\nHow to start the app: {{STARTUP_COMMAND_OR_UNKNOWN}}\nCheck commands that exist (tests, build, lint): {{CHECK_COMMANDS_OR_NONE}}\nCommands you may run: {{ALLOWED_COMMANDS}}\nFiles, services and actions you must not touch: {{BOUNDARIES}}\n</inputs>\n\n<tools>\nTools available in this session: {{TOOLS_AVAILABLE}}\nIf a tool is not listed above, you do not have it. Say what you could not do instead of describing a result you did not observe.\n</tools>\n\nBefore changing anything\nRead the contract. Confirm which snapshot you are starting from. If you can run commands, start the app or run one existing check and record whether it works before your change. If it is already broken, stop and tell me.\n\nPass 1 - Builder\nImplement only what the contract lists as in scope. Work in small steps and keep the app in a state that starts and runs. If the contract is unclear, or the work would need something outside it, stop and ask me. Do not widen the scope yourself.\n\nPass 2 - Evaluator\nRun every check from the contract that your tools allow, against the snapshot as it now stands. Record each check as Passed (you ran it and saw the expected result), Failed (you ran it and saw something else) or Not run (with the reason and the exact steps I can use to run it). Reading the code is not running the check: label that \"Inspected, not run\". If a check fails, fix the implementation, not the check.\n\nPass 3 - Recorder\nWrite the build record from what actually happened in this session, not from what was planned.\n\nOutput format\n1. Summary: what was built, in two or three sentences.\n2. Snapshot: the starting identifier, and the resulting identifier or changed-file list.\n3. Files changed: path and one line each.\n4. Check results: a table with check number, status, and evidence (command and the relevant output).\n5. Startup instructions: the exact commands you ran to start the app, in order. If you could not start it, say so and give the commands you expect to work, labelled as not run.\n6. Gaps and known problems.\n7. Suggested next action for the owner.\n\nRules\n- Build only the agreed work. List anything else you noticed under \"Gaps\".\n- Never remove, weaken or rewrite a check so that it passes.\n- Never report a check as passed unless you ran it in this session.\n- No deploying, publishing, pushing or installing anything unless it is listed under \"Commands you may run\".\n- Do not describe the feature as accepted or approved. I decide that after review.\n\nBefore you finish, answer each line with yes, no or not checked:\n- Only in-scope work was done.\n- Every contract check has a status of Passed, Failed or Not run.\n- Each result names the snapshot it was run against.\n- Startup instructions come from commands actually run, or are labelled as not run.\n- Remaining gaps are recorded.",
+      "checks": [
+        "Only agreed work is performed.",
+        "Check results name the snapshot they were run against.",
+        "Startup instructions and remaining gaps are recorded.",
+        "Every contract check has a status of Passed, Failed or Not run.",
+        "No check was removed or weakened to make it pass."
+      ],
+      "boundaries": [
+        "Nothing outside the agreed contract is built.",
+        "No deploy, publish, push or install unless the operator listed the command as allowed.",
+        "A check that was only read, not run, is never reported as passed.",
+        "The session does not describe the feature as accepted. The owner decides after review."
+      ],
+      "sources": [
+        {
+          "label": "Anthropic: Effective harnesses for long-running agents",
+          "publisher": "Anthropic",
+          "published": "2025-11-26",
+          "read": "2026-11-10",
+          "url": "https://www.anthropic.com/research/effective-harnesses-for-long-running-agents",
+          "grounds": "The article describes working on one feature at a time, getting bearings and running a basic check before new work, testing end to end before marking anything as passing, never editing tests to make them pass, and leaving a start script and progress notes. We adapt those habits to a single prompt."
+        },
+        {
+          "label": "Anthropic: Harness design for long-running apps",
+          "publisher": "Anthropic",
+          "published": "2026-03-24",
+          "read": "2026-11-10",
+          "url": "https://www.anthropic.com/research/harness-design-long-running-apps",
+          "grounds": "Supports building against a contract agreed beforehand and handing the result to a separate evaluation step."
+        },
+        {
+          "label": "Claude Code Docs: Best practices for Claude Code",
+          "publisher": "Anthropic (Claude Code documentation)",
+          "published": "Living page, no fixed date",
+          "read": "2026-11-10",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "grounds": "Supports giving the session a check it can run that comes back pass or fail, and stating what it is allowed to touch."
+        }
+      ]
+    },
+    {
+      "id": "BWL-005",
+      "seed_id": "evaluate-result",
+      "title": "Evaluate and report an issue",
+      "category": "Quality & handoff",
+      "task": "Check a supplied result against its contract without editing it, and report passed, failed and untested checks separately, with reproduction steps for every failure.",
+      "inputs": [
+        "The feature contract or expected behaviour",
+        "The specific result snapshot (commit, build, archive or local URL) and how to start it",
+        "Environment details: OS, browser, runtime versions",
+        "Verification tools the session really has (browser automation, test runner, or none)"
+      ],
+      "roles": [
+        {
+          "role": "Evaluator",
+          "does": "Confirms the snapshot, exercises each contract check and sorts it into Passed, Failed or Untested.",
+          "hands_on": "Findings with evidence for each check."
+        },
+        {
+          "role": "Recorder",
+          "does": "Writes the report and one reproducible issue for every failed check.",
+          "hands_on": "The issue report."
+        },
+        {
+          "role": "Owner",
+          "does": "Decides what the findings mean: accept, send back for repair, or re-test.",
+          "hands_on": "A decision. The report itself gives no verdict."
+        }
+      ],
+      "steps": [
+        "Paste the contract, name the exact snapshot and list the verification tools available.",
+        "Evaluator pass: confirm the snapshot identity before testing anything.",
+        "Exercise each check as a user would where tools allow. Otherwise inspect and label it \"Inspected, not run\".",
+        "Sort every check into Passed, Failed or Untested.",
+        "Recorder pass: write an issue with steps, expected and actual result, and evidence for each failure.",
+        "Read the report and decide what happens next. Run the untested checks yourself if they matter."
+      ],
+      "prompt": "You are helping me evaluate a result against its contract and report what you find. You report; you do not fix. Work through the two passes below in order. Each pass is a responsibility, not a separate worker. I am the operator: I supply the inputs, hand work from one pass to the next, and make every decision about the result.\n\n<contract>\n{{FEATURE_CONTRACT_OR_EXPECTED_BEHAVIOUR}}\n</contract>\n\n<inputs>\nResult snapshot (commit, build, archive or local URL): {{RESULT_SNAPSHOT_ID_AND_LOCATION}}\nHow to start it: {{STARTUP_INSTRUCTIONS}}\nEnvironment (OS, browser, runtime versions): {{ENVIRONMENT}}\n</inputs>\n\n<tools>\nTools available in this session: {{TOOLS_AVAILABLE}}\nIf a tool is not listed above, you do not have it. Say what you could not do instead of describing a result you did not observe.\n</tools>\n\nPass 1 - Evaluator\nFirst confirm you are looking at the snapshot named above, and say how you confirmed it. Then take the contract checks one at a time. Where your tools allow, exercise the result the way a user would and compare what you see with the expected result. Where they do not, you may read the code, but record that as \"Inspected, not run\". Judge the snapshot itself, not anyone's description of it.\n\nPut every check in exactly one group:\n- Passed: you ran it and observed the expected result.\n- Failed: you ran it and observed something different.\n- Untested: you could not run it. Give the reason and the steps I can use to run it.\n\nPass 2 - Recorder\nWrite the report in the format below. For every failed check, write an issue someone else can reproduce without asking you anything.\n\nOutput format\n1. Snapshot evaluated, and how it was confirmed.\n2. Environment and tools actually used.\n3. Counts: passed, failed, untested.\n4. Passed: check number and the evidence you saw.\n5. Failed: one issue per check, with\n   - Title\n   - Steps to reproduce, numbered, starting from a fresh start of the app\n   - Expected result, quoted from the contract\n   - Actual result\n   - Evidence: command output, log line or screenshot path\n   - Location in the code, only if you found it\n6. Untested: check number, reason, and how to run it.\n7. Outside the contract: other problems you noticed, clearly separated.\n\nRules\n- Do not edit, repair or re-run the build with changes. If you changed anything in order to test, say exactly what.\n- Do not move a failure to \"passed\" because the rest looks good, and do not call a problem minor unless the contract does.\n- Report gaps against the contract. Leave out style preferences the contract does not mention.\n- State any tool you did not have. A check you could not run is untested, never passed.\n- Give no overall approval or rejection. I decide what happens next.\n\nBefore you finish, answer each line with yes, no or not checked:\n- Passed, failed and untested checks are in separate lists.\n- Every failure has reproduction steps, expected result and actual result.\n- The snapshot identifier appears in the report.\n- Missing tool access is disclosed.\n- Nothing in the result was edited.",
+      "checks": [
+        "Passed, failed and untested checks are distinct.",
+        "Every failure includes reproduction steps and the expected behaviour.",
+        "Missing tool access is disclosed.",
+        "The report names the snapshot that was evaluated.",
+        "Nothing in the result was edited during evaluation."
+      ],
+      "boundaries": [
+        "Report only: no fixes, no silent edits to the result.",
+        "Findings come from the snapshot itself, not from a description of the work.",
+        "A check that could not be run is untested, never passed.",
+        "No overall approval or rejection. That decision belongs to the owner."
+      ],
+      "sources": [
+        {
+          "label": "Anthropic: Harness design for long-running apps",
+          "publisher": "Anthropic",
+          "published": "2026-03-24",
+          "read": "2026-11-10",
+          "url": "https://www.anthropic.com/research/harness-design-long-running-apps",
+          "grounds": "The article reports that separating the party judging the work from the party doing it is a strong lever, that an evaluator should exercise the running result as a user would against agreed criteria, and that evaluators tend to talk themselves out of real issues. We adapt this to a report-only prompt with three result groups."
+        },
+        {
+          "label": "Claude Code Docs: Best practices for Claude Code",
+          "publisher": "Anthropic (Claude Code documentation)",
+          "published": "Living page, no fixed date",
+          "read": "2026-11-10",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "grounds": "Supports review by someone who did not write the code, reviewing against the spec, and reporting gaps that affect correctness while leaving style aside."
+        }
+      ]
+    },
+    {
+      "id": "BWL-006",
+      "seed_id": "session-handoff",
+      "title": "Hand work to the next session",
+      "category": "Quality & handoff",
+      "task": "Record the minimum context another session needs to continue without guessing: goal, exact snapshot, work done, checks, gaps and one next action.",
+      "inputs": [
+        "The current goal and who owns it",
+        "The exact snapshot: commit, file list, artifact locations, how to start it",
+        "Work performed in this session",
+        "Checks actually run, with results",
+        "Decisions the owner actually made, with their scope",
+        "Known gaps, open questions and the intended next action",
+        "Tools the session really has (can it read the repository or notes, or only what is pasted?)"
+      ],
+      "roles": [
+        {
+          "role": "Recorder",
+          "does": "Writes the handoff note from the supplied facts, checks identifiers where it can, and marks missing items \"Not recorded\".",
+          "hands_on": "The handoff note."
+        },
+        {
+          "role": "Owner",
+          "does": "Corrects the note, confirms the next action and gives it to the next session.",
+          "hands_on": "The note, pasted at the start of the next session."
+        }
+      ],
+      "steps": [
+        "Fill in goal, snapshot, work done, checks, decisions, gaps and next action.",
+        "List the tools the session has, so it knows whether it can verify paths and identifiers.",
+        "Recorder pass: write the ten-section note. Missing facts become \"Not recorded\".",
+        "Check that owner decisions carry their scope and that open questions are separate.",
+        "Check that there is exactly one next action with a first command or file.",
+        "Correct the note, then paste it at the start of the next session."
+      ],
+      "prompt": "You are helping me write a handoff note so that another session, or another person, can continue this work without guessing. The reader will not have this conversation. Each pass is a responsibility, not a separate worker. I am the operator: I supply the inputs, hand work from one pass to the next, and make every decision about the result.\n\n<inputs>\nGoal and owner: {{CURRENT_GOAL_AND_OWNER}}\nExact snapshot (commit, file list, artifact locations): {{SNAPSHOT_ID_AND_LOCATIONS}}\nHow to start or open the work: {{STARTUP_COMMANDS_OR_UNKNOWN}}\nWork performed this session: {{WORK_PERFORMED}}\nChecks actually run, with results: {{CHECKS_RUN_AND_RESULTS}}\nDecisions the owner actually made: {{OWNER_DECISIONS_WITH_SCOPE}}\nKnown gaps and open questions: {{KNOWN_GAPS}}\nIntended next action: {{NEXT_ACTION}}\n</inputs>\n\n<tools>\nTools available in this session: {{TOOLS_AVAILABLE}}\nIf a tool is not listed above, you do not have it. Say what you could not do instead of describing a result you did not observe.\n</tools>\n\nPass 1 - Recorder\nWrite the note from the inputs above and from anything you can read with the listed tools. If you can read the repository or progress notes, check the snapshot identifier and file locations against them and correct the note where they differ, saying that you did. Where something is missing, write \"Not recorded\". Do not fill a gap with a guess.\n\nOutput format\nHandoff: <goal in a few words>\nWritten: <date>, by <who>\n1. Goal: what the work is for and what done means.\n2. Snapshot: identifiers, where the artifacts are, and the exact commands to start or open them.\n3. Done this session: short factual lines.\n4. Checks: Passed, Failed and Not run, each with the command or steps used.\n5. Owner decisions: each one with its scope, for example \"approved the wording of section 2\" and not \"approved\".\n6. Open questions: who needs to answer each one.\n7. Gaps and known problems.\n8. Next action: one concrete action, with the first command or file to open.\n9. Do not: boundaries the next session must keep.\n10. Read first: the two or three files or messages that matter most.\n\nRules\n- Record only what the inputs or your own reading support. Unfinished work stays described as unfinished.\n- Keep approvals at the scope they were given. Never widen or infer one.\n- Use concrete commands, paths and identifiers in place of descriptions.\n- One next action. If there are several candidates, list the others under \"Open questions\".\n- Keep it short enough to read in two minutes.\n\nBefore you finish, answer each line with yes, no or not checked:\n- A reader with no access to this conversation could start the next action from this note alone.\n- Commands and artifact locations are concrete.\n- Decisions are separated from open questions, and each approval keeps its scope.\n- Nothing unfinished is described as finished.\n- Every missing item is marked \"Not recorded\".",
+      "checks": [
+        "Commands and artifact locations are concrete.",
+        "Approval boundaries retain their scope.",
+        "The next action is clear, and uncompleted work stays described as uncompleted.",
+        "A reader without the original conversation can start from the note alone.",
+        "Missing information is marked \"Not recorded\" and not guessed."
+      ],
+      "boundaries": [
+        "No approval or decision is recorded that the owner did not make.",
+        "No unfinished work is described as finished.",
+        "The note does not choose between several next actions. Extra candidates go to the owner as open questions.",
+        "The note records state. It does not continue the work."
+      ],
+      "sources": [
+        {
+          "label": "Anthropic: Effective harnesses for long-running agents",
+          "publisher": "Anthropic",
+          "published": "2025-11-26",
+          "read": "2026-11-10",
+          "url": "https://www.anthropic.com/research/effective-harnesses-for-long-running-agents",
+          "grounds": "The article starts from the fact that each new session begins with no memory of the previous one, and describes progress notes, a clean state and clear artifacts left for the next session. We adapt that to a short note a person hands over."
+        },
+        {
+          "label": "Anthropic: Harness design for long-running apps",
+          "publisher": "Anthropic",
+          "published": "2026-03-24",
+          "read": "2026-11-10",
+          "url": "https://www.anthropic.com/research/harness-design-long-running-apps",
+          "grounds": "Describes a structured handoff that carries the previous state and the next steps, and communication between steps through files."
+        },
+        {
+          "label": "Claude Code Docs: Best practices for Claude Code",
+          "publisher": "Anthropic (Claude Code documentation)",
+          "published": "Living page, no fixed date",
+          "read": "2026-11-10",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "grounds": "Supports writing down what cannot be found by reading the repository: decisions, procedures and environment details."
+        }
+      ]
+    }
+  ]
+}

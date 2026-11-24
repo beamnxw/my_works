@@ -39,6 +39,11 @@ This repository is the start of a practical knowledge base for AI agents, harnes
    Product harness package aligned with Claude Fable 5.2 prompting patterns.  
    *Seventh entry in the knowledge base.*
 
+8. **[Beam Workflow Library](./beam-workflow-library/)**  
+   A self-contained local app with six AI workflow cards: research, writing, feature planning, building, evaluation and handoff.  
+   Search, filters, favourites, prompt copying and Markdown export. Original v1 built by Viktor for @beamnxw.
+
 ---
 
 More entries coming.
+
