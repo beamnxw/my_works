@@ -85,6 +85,11 @@ button { font: inherit; color: var(--ink); cursor: pointer; }
 .btn.primary:hover { background: var(--peach); border-color: var(--peach); }
 .btn.quiet { border-color: var(--line-strong); font-weight: 500; }
 .btn[disabled] { opacity: 0.45; cursor: default; background: transparent; }
+.favexport { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px 20px; }
+.favexport .favtext { flex: 1 1 18em; min-width: 0; max-width: 46em; }
+.favexport .favhint { font-size: 14px; color: var(--ink-soft); }
+.favexport .favmsg { font-size: 14px; color: var(--navy); min-height: 1.6em; }
+.favexport details.mdbox { flex: 1 1 100%; max-width: 52em; }
 .notice { background: var(--peach-wash); border-left: 4px solid var(--coral); padding: 12px 16px; border-radius: 8px; font-size: 14px; }
 
 /* Layout */
@@ -238,6 +243,19 @@ footer code { font-family: var(--mono); font-size: 14px; color: var(--ink); }
         <span class="grouplabel" id="lab-fav">Favourites</span>
         <div class="chips"><button type="button" class="chip" id="favonly" aria-pressed="false">Favourites only (0)</button></div>
       </div>
+    </div>
+    <div class="favexport" role="group" aria-label="Export favourites">
+      <button type="button" class="btn quiet" id="export-favs" aria-describedby="fav-export-hint">Export favourites as Markdown (0)</button>
+      <div class="favtext">
+        <p class="favhint" id="fav-export-hint"></p>
+        <p class="favmsg" id="fav-export-status" role="status" aria-live="polite"></p>
+      </div>
+      <details class="mdbox" id="fav-md-box" hidden>
+        <summary>Markdown text (for manual copy)</summary>
+        <p class="favhint">The same text the export button saves as beam-workflow-favourites.md.</p>
+        <button type="button" class="btn quiet" id="fav-md-copy">Copy Markdown text</button>
+        <textarea class="md" id="fav-md-text" readonly spellcheck="false" wrap="soft" aria-label="Markdown export of all favourites"></textarea>
+      </details>
     </div>
     <p class="notice" id="storage-notice" hidden>This browser is not letting the page keep data here, so favourites will be forgotten when the page is reloaded or closed. Opening the library through localhost usually fixes this.</p>
   </section>
@@ -843,6 +861,7 @@ footer code { font-family: var(--mono); font-size: 14px; color: var(--ink); }
     if (i === -1) state.favs.push(id); else state.favs.splice(i, 1);
     state.favs.sort();
     saveFavs();
+    resetFavExport();
     renderList();
     syncDetailFav();
   }
@@ -953,6 +972,7 @@ footer code { font-family: var(--mono); font-size: 14px; color: var(--ink); }
     }
     elReset.disabled = !active;
     elFavOnly.textContent = 'Favourites only (' + state.favs.length + ')';
+    updateFavExport();
   }
 
   /* ---------- Markdown export ---------- */
@@ -1008,6 +1028,99 @@ footer code { font-family: var(--mono); font-size: 14px; color: var(--ink); }
     } catch (e) {
       box.open = true;
       say('This browser blocked the download. The Markdown is shown below so you can copy it.');
+    }
+  }
+
+  /* ---------- Markdown export of all favourites (one file) ---------- */
+  var FAV_FILE = 'beam-workflow-favourites.md';
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function todayLocal() { var d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function favCards() { return CARDS.filter(function (c) { return isFav(c.id); }); }
+  function cardSection(card) {
+    var f = fence(card.prompt), L = [];
+    L.push('## ' + card.id + ': ' + card.title, '');
+    L.push('- **ID:** ' + card.id);
+    L.push('- **Category:** ' + card.category);
+    L.push('- **Role sequence:** ' + roleNames(card).join(ARROW));
+    L.push('- **Scope seed:** ' + card.seed_id, '');
+    L.push('### Task', '', card.task, '');
+    L.push('### Inputs', '');
+    card.inputs.forEach(function (x) { L.push('- ' + x); });
+    L.push('', '### Role sequence', '');
+    card.roles.forEach(function (r, i) { L.push((i + 1) + '. **' + r.role + '**: ' + r.does + ' Hands on: ' + r.hands_on); });
+    L.push('', '### Steps', '');
+    card.steps.forEach(function (x, i) { L.push((i + 1) + '. ' + x); });
+    L.push('', '### Prompt', '', f + 'text', card.prompt, f, '');
+    L.push('### Completion checks', '');
+    card.checks.forEach(function (x) { L.push('- [ ] ' + x); });
+    L.push('', '### Authority boundaries', '');
+    card.boundaries.forEach(function (x) { L.push('- ' + x); });
+    L.push('', '### Sources', '');
+    card.sources.forEach(function (s) {
+      L.push('- [' + s.label + '](' + s.url + ')');
+      L.push('  - Publisher: ' + s.publisher);
+      L.push('  - Published: ' + s.published + '. Read: ' + s.read + '.');
+      L.push('  - What this card takes from it: ' + s.grounds);
+    });
+    L.push('');
+    return L;
+  }
+  function toFavouritesMarkdown(cards, date) {
+    var L = [];
+    L.push('# Beam Workflow Library: favourite workflows', '');
+    L.push('- **Exported:** ' + date);
+    L.push('- **Favourites:** ' + cards.length + ' of ' + CARDS.length + ' workflows');
+    L.push('- **Library:** ' + DATA.library.name + ' ' + DATA.library.version + ' (' + DATA.library.owner + ')');
+    L.push('- **Order:** library order (' + cards.map(function (c) { return c.id; }).join(', ') + ')', '');
+    L.push('## Contents', '');
+    cards.forEach(function (c, i) { L.push((i + 1) + '. ' + c.id + ': ' + c.title); });
+    L.push('');
+    cards.forEach(function (c) { L.push('---', ''); cardSection(c).forEach(function (x) { L.push(x); }); });
+    L.push('---', '', '## Note', '', DATA.library.adaptation_note, '', DATA.library.sources_note, '');
+    return L.join('\n');
+  }
+  function updateFavExport() {
+    var n = state.favs.length;
+    $('export-favs').textContent = 'Export favourites as Markdown (' + n + ')';
+    $('fav-export-hint').textContent = n === 0
+      ? 'No favourites yet. To make one, press \u201c\u2606 Add favourite\u201d on any workflow card. Then come back here to export them all as one file.'
+      : 'Saves all ' + n + (n === 1 ? ' favourite' : ' favourites') + ' as one file, in library order, whatever the search or filters show.';
+  }
+  function resetFavExport() {
+    $('fav-export-status').textContent = '';
+    $('fav-md-box').hidden = true;
+    $('fav-md-box').open = false;
+  }
+  function sayFav(msg) {
+    var s = $('fav-export-status');
+    s.textContent = '';
+    setTimeout(function () { s.textContent = msg; }, 30);
+  }
+  function exportFavourites() {
+    var cards = favCards();
+    if (cards.length === 0) {
+      sayFav('You have no favourites to export yet. Press \u201c\u2606 Add favourite\u201d on any workflow card, then choose this button again.');
+      return;
+    }
+    var md = toFavouritesMarkdown(cards, todayLocal());
+    var box = $('fav-md-box'), area = $('fav-md-text');
+    area.value = md;
+    box.hidden = false;
+    var what = cards.length + (cards.length === 1 ? ' favourite' : ' favourites') + ' (' + cards.map(function (c) { return c.id; }).join(', ') + ')';
+    try {
+      var blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = el('a', { href: url, download: FAV_FILE });
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+      sayFav('Export started: ' + FAV_FILE + ' with ' + what + '. If no file was saved, open \u201cMarkdown text\u201d below and copy it.');
+    } catch (e) {
+      box.open = true;
+      fitHeight(area);
+      sayFav('This browser blocked the download. The Markdown is shown below so you can copy it.');
     }
   }
 
@@ -1171,6 +1284,11 @@ footer code { font-family: var(--mono); font-size: 14px; color: var(--ink); }
   elReset.addEventListener('click', function () { resetAll(true); });
   $('empty-reset').addEventListener('click', function () { resetAll(true); });
   elFavOnly.addEventListener('click', function () { state.favOnly = !state.favOnly; renderChips(); renderList(); });
+  $('export-favs').addEventListener('click', exportFavourites);
+  $('fav-md-copy').addEventListener('click', function () {
+    copyText($('fav-md-text').value, $('fav-md-text'), sayFav, 'Markdown');
+  });
+  $('fav-md-box').addEventListener('toggle', function () { if ($('fav-md-box').open) fitHeight($('fav-md-text')); });
   document.addEventListener('keydown', function (e) {
     var tag = (e.target && e.target.tagName) || '';
     var typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
@@ -1183,7 +1301,7 @@ footer code { font-family: var(--mono); font-size: 14px; color: var(--ink); }
   });
   window.addEventListener('hashchange', function () { route(true); });
   window.addEventListener('storage', function (e) {
-    if (e.key === STORAGE_KEY) { loadFavs(); renderList(); syncDetailFav(); }
+    if (e.key === STORAGE_KEY) { loadFavs(); resetFavExport(); renderList(); syncDetailFav(); }
   });
 
   /* ---------- start ---------- */
